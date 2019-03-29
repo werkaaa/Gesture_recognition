@@ -2,169 +2,175 @@ import numpy as np
 import cv2 as cv
 from colorsys import rgb_to_hsv
 
-"""
-def draw_markers(img, points, color=(0, 0, 255), size=20):
-    for point in points:
-        img = cv.drawMarker(img, tuple(point), color, "MARKER_CROSS", size)
-    return img
-"""
 
 
-def get_color(img, p):
-    color = img[p[1]][p[0]]
-    r, g, b = color
-    res = rgb_to_hsv(r, g, b)
-    return res[0]*180, res[1]*255, res[2]
+class SkinFinder:
+    brig_norm_size = 10
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.background = None
+        self.skin = None
+        self.brightness_norm = None
+        self.trackbar_names = None
+        self.probe_idx = 0
+        self.back_thresh = 30
+        self.probing_points = [[100, 300]]
+        self.thre_up = 3 * [30]
+        self.thre_down = 3 * [30]
+        self.kernel_size = 3
+        self.alpha = 5
+
+    def add_probing_point(self, coordinates: list):
+        if coordinates[0] < self.width and coordinates[1] < self.height:
+            self.probing_points.append(coordinates)
+            print("added skin probing point")
+        else:
+            print("wrong coordinates")
 
 
-def find_skin(img, skin, thre_up, thre_down):
-    if skin is None:
-        return np.zeros(img.shape[0:2], np.uint8)
-    img = cv.cvtColor(img, cv.COLOR_RGB2HSV)
-    part_res = len(skin) * [0]
-    for i, color in enumerate(skin):
-        low = [color[j] - thre_down[j] for j in range(3)]
-        high = [color[j] + thre_up[j] for j in range(3)]
-        part_res[i] = cv.inRange(img, np.array(low), np.array(high))
-        print(part_res[i][100,300], low, img[100,300,:],high)
-    result = np.zeros(img.shape[0:2], np.uint8)
-    for i in range(len(skin)):
-        result[part_res[i] != 0] = 255
-    print (result[100,300])
-    return result
+    def show_trackbars(self):
+        self.trackbar_names = ("H_up", "S_up", "V_up", "H_do", "S_do", "V_do", "back_thresh", "kernel_size", "alpha")
+        track_val = ((40, 70), (30, 70), (30, 70), (40, 70), (30, 70), (30, 70), (30, 70), (3, 10), (5, 10))
+        cv.namedWindow("trackbars")
+        for name, values in zip(self.trackbar_names, track_val):
+            cv.createTrackbar(name, "trackbars", values[0], values[1], self.update_trackbars)
 
+    def update_trackbars(self, a):
+        if self.trackbar_names is None:
+            return
+        values = [cv.getTrackbarPos(bar, "trackbars") for bar in self.trackbar_names]
 
-def rm_noise(img, kernel, alpha):
-    img = cv.erode(img, np.ones((kernel, kernel),np.uint8))
-    kernel *= alpha
-    return cv.dilate(img, np.ones((kernel, kernel),np.uint8))
+        self.thre_up = values[0:3]
+        self.thre_down = values[3:6]
+        self.back_thresh = values[6]
+        self.kernel_size = values[7]
+        self.alpha = values[8]
+        if self.kernel_size == 0:
+            self.kernel_size = 1
+        if self.alpha == 0:
+            self.alpha = 1
 
+    def get_skin_color(self, img):
+        if self.skin is None:
+            self.skin = []
+        x, y = self.probing_points[self.probe_idx]
+        color = img[y][x]
+        r, g, b = color
+        res = rgb_to_hsv(r, g, b)
+        color = (res[0] * 180, res[1] * 255, res[2])
+        if self.probe_idx < len(self.probing_points) - 1:
+            self.probe_idx += 1
+        print("added: ", color)
+        self.skin.append(color)
 
-def find_foreground(img, back, threshold):
-    out = np.empty(img.shape, np.uint8)
-    cv.absdiff(img, back, out)
-    res = np.zeros(img.shape[0:2], np.uint8)
-    for i in range(3):
-        res[out[:, :, i] > threshold] += 1
-    res[res >= 2] = 255
-    return res
+    def find_skin(self, img):
+        if self.skin is None:
+            return np.ones((self.height, self.width), np.uint8)
+        img = cv.cvtColor(img, cv.COLOR_RGB2HSV)
+        part_res = len(self.skin) * [0]
+        for i, color in enumerate(self.skin):
+            low = [color[j] - self.thre_down[j] for j in range(3)]
+            high = [color[j] + self.thre_up[j] for j in range(3)]
+            part_res[i] = cv.inRange(img, np.array(low), np.array(high))
+        result = np.zeros(img.shape[0:2], np.uint8)
+        for i in range(len(self.skin)):
+            result[part_res[i] != 0] = 255
+        return result
 
+    def rm_noise(self, img):
+        kernel = (self.kernel_size, self.kernel_size)
+        img = cv.erode(img, np.ones(kernel, np.uint8))
+        kernel = (self.kernel_size * self.alpha, self.kernel_size * self.alpha)
+        return cv.dilate(img, np.ones(kernel, np.uint8))
 
-def repair_brightness(img, norm, size):
-    img = cv.cvtColor(img, cv.COLOR_RGB2HSV)
-    norm = cv.cvtColor(norm, cv.COLOR_RGB2HSV)
-    diff = img[0:size, 0:size, 2].astype(np.int8) - norm[0:size, 0:size, 2].astype(np.int8)
-    diff = np.mean(diff)
-    value = img[:, :, 2]
-    value = value - diff
-    value[value < 0] = 0
-    value = np.array(value, np.uint8)
-    img[:, :, 2] = value
-    img = cv.cvtColor(img, cv.COLOR_HSV2RGB)
-    return img
+    def find_foreground(self, img):
+        if self.background is None:
+            return np.ones((self.height, self.width), dtype=np.uint8)
+        out = np.empty(img.shape, np.uint8)
+        cv.absdiff(img, self.background, out)
+        res = np.zeros(img.shape[0:2], np.uint8)
+        for i in range(3):
+            res[out[:, :, i] > self.back_thresh] += 1
+        res[res >= 1] = 255
+        return res
 
+    def add_background(self, img):
+        print("Background added")
+        self.background = img
+        size = self.brig_norm_size
+        brightness_norm = cv.cvtColor(self.background[0:size, 0:size, :], cv.COLOR_RGB2HSV)
+        self.brightness_norm = brightness_norm[:, :, 2]
 
-def update_trackbars(a):
-    values = [cv.getTrackbarPos(bar, "trackbars") for bar in trackbar_names]
-    global thre_up
-    global thre_down
-    global back_thresh
-    global thre_down
-    global kernel_size
-    global alpha
+    def repair_brightness(self, img):
+        if self.brightness_norm is None:
+            return img
+        img = cv.cvtColor(img, cv.COLOR_RGB2HSV)
+        size = self.brig_norm_size
+        diff = img[0:size, 0:size, 2] - self.brightness_norm
+        diff = np.mean(diff)
+        value = img[:, :, 2]
+        value = value - diff
+        value[value < 0] = 0
+        value = np.array(value, np.uint8)
+        img[:, :, 2] = value
+        img = cv.cvtColor(img, cv.COLOR_HSV2RGB)
+        return img
 
-    thre_up = values[0:3]
-    thre_down = values[3:6]
-    back_thresh = values[6]
-    kernel_size = values[7]
-    alpha = values[8]
-    if kernel_size == 0:
-        kernel_size = 1
-    if alpha == 0:
-        alpha = 1
-    print(values)
+    def get_skin_mask(self, img):
+        mask = self.find_skin(img)
+        return self.rm_noise(mask)
 
+    def get_foreground_mask(self, img):
+        mask = self.find_foreground(img)
+        return self.rm_noise(mask)
 
-def merge_masks(m1, m2, shape):
-    res = np.zeros(shape, np.uint8)
-    idx = np.equal(m1, m2)
-    idx[np.equal(m1, 0)] = 0
-    res[idx] = 255
-    return res
+    def get_important_area(self, img):
+        m1 = self.get_skin_mask(img)
+        m2 = self.get_foreground_mask(img)
+        res = np.zeros((self.height, self.width), np.uint8)
+        idx = np.equal(m1, m2)
+        idx[np.equal(m1, 0)] = False
+        res[idx] = 255
+        return res
 
 
 cam = cv.VideoCapture(0)
 
 width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
 height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
-print(width, height)
-background = None
-skin = None
-probe_idx = 0
-back_thresh = 30
-probing_points = [[100, 300]]
-thre_up = [5, 5, 5]
-thre_down = [5, 5, 5]
-kernel_size = 3
-alpha = 5
-foreground_mask = np.ones((height, width), dtype=np.uint8) * 255
 
-trackbar_names = ("H_up", "S_up", "V_up", "H_do", "S_do", "V_do", "back_thresh", "kernel_size", "alpha")
-track_val = ((40, 70), (30, 70), (30, 70), (40, 70), (30, 70), (30, 70), (30, 70), (3, 10), (5, 10))
-cv.namedWindow("trackbars")
-for name, values in zip(trackbar_names, track_val):
-    cv.createTrackbar(name, "trackbars", values[0], values[1], update_trackbars)
-
+finder = SkinFinder(width, height)
+finder.show_trackbars()
 while True:
     ret, frame = cam.read()
+    key_input = cv.waitKey(1)
+    if key_input == ord('b'):
+        finder.add_background(frame)
 
-    if cv.waitKey(1) == ord('b'):
-        print("Background added")
-        background = frame
+    frame = finder.repair_brightness(frame)
 
-    if background is not None:
-        frame = repair_brightness(frame, background, 10)
-        foreground_mask = find_foreground(frame, background, back_thresh)
-        #cv.imshow("foreground_mask", foreground_mask)
+    if key_input == ord('p'):
+        finder.get_skin_color(frame)
 
-    if cv.waitKey(1) == ord('p'):
-        if skin == None:
-            skin = []
-        color = get_color(frame, probing_points[probe_idx])
-        if probe_idx < len(probing_points) - 1:
-            probe_idx += 1
-        print("added: ", color)
-        skin.append(color)
-
-    if cv.waitKey(1) == ord('c'):
-        skin = None
-        probe_idx = 0
-
-    if cv.waitKey(1) == ord('a'):
-        x = int(input("x: "))
-        y = int(input("y: "))
-        probing_points=[probing_points,[x,y]]
-
-    if cv.waitKey(1) == ord('q'):
+    if key_input == ord('q'):
         break
 
-    skin_mask = find_skin(frame, skin, thre_up, thre_down)
+    if key_input == ord('a'):
+        x = int(input("x: "))
+        y = int(input("y: "))
+        finder.add_probing_point((x, y))
 
-    skin_no_noise = rm_noise(skin_mask, kernel_size, alpha)
-    foreground_no_noise = rm_noise(foreground_mask, kernel_size, alpha)
+    masks_merged = finder.get_important_area(frame)
 
-    masks_merged = np.zeros((height, width))
-    masks_merged = merge_masks(skin_no_noise, foreground_no_noise, (height, width))
-
-    frame = cv.drawMarker(frame, tuple(probing_points[probe_idx]), (0, 0, 255))
-
+    frame = cv.drawMarker(frame, tuple(finder.probing_points[finder.probe_idx]), (0, 0, 255))
+    #skin_mask = finder.get_skin_mask(frame)
+    #foreground = finder.get_foreground_mask(frame)
     #cv.imshow("skin_mask", skin_mask)
-    #cv.imshow("foreground_no_noise", foreground_no_noise)
+    #cv.imshow("foreground_no_noise", foreground)
     cv.imshow("masks_merged", masks_merged)
     cv.imshow("frame", frame)
-
-    #cv.imshow("skin_no_noise", skin_no_noise)
-
 
 cam.release()
 cv.destroyAllWindows()

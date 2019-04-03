@@ -3,7 +3,6 @@ import cv2 as cv
 from colorsys import rgb_to_hsv
 
 
-
 class SkinFinder:
     brig_norm_size = 10
 
@@ -29,10 +28,9 @@ class SkinFinder:
         else:
             print("wrong coordinates")
 
-
     def show_trackbars(self):
         self.trackbar_names = ("H_up", "S_up", "V_up", "H_do", "S_do", "V_do", "back_thresh", "kernel_size", "alpha")
-        track_val = ((40, 70), (30, 70), (30, 70), (40, 70), (30, 70), (30, 70), (30, 70), (3, 10), (5, 10))
+        track_val = ((40, 70), (30, 70), (30, 70), (40, 70), (30, 70), (30, 70), (30, 120), (3, 10), (5, 10))
         cv.namedWindow("trackbars")
         for name, values in zip(self.trackbar_names, track_val):
             cv.createTrackbar(name, "trackbars", values[0], values[1], self.update_trackbars)
@@ -101,19 +99,20 @@ class SkinFinder:
         self.background = img
         size = self.brig_norm_size
         brightness_norm = cv.cvtColor(self.background[0:size, 0:size, :], cv.COLOR_RGB2HSV)
-        self.brightness_norm = brightness_norm[:, :, 2]
+        self.brightness_norm = np.mean(brightness_norm[:, :, 2])
 
     def repair_brightness(self, img):
         if self.brightness_norm is None:
             return img
         img = cv.cvtColor(img, cv.COLOR_RGB2HSV)
         size = self.brig_norm_size
-        diff = img[0:size, 0:size, 2] - self.brightness_norm
-        diff = np.mean(diff)
+        img_bri = np.mean(img[0:size, 0:size, 2])
+        diff = img_bri - self.brightness_norm
         value = img[:, :, 2]
         value = value - diff
         value[value < 0] = 0
         value = np.array(value, np.uint8)
+        #print("norm: ", self.brightness_norm, "diff: ", diff, "img: ", img_bri, "val: ",np.mean(value[:size,:size]))
         img[:, :, 2] = value
         img = cv.cvtColor(img, cv.COLOR_HSV2RGB)
         return img
@@ -165,8 +164,8 @@ while True:
     masks_merged = finder.get_important_area(frame)
 
     frame = cv.drawMarker(frame, tuple(finder.probing_points[finder.probe_idx]), (0, 0, 255))
-    #skin_mask = finder.get_skin_mask(frame)
-    #foreground = finder.get_foreground_mask(frame)
+    skin_mask = finder.get_skin_mask(frame)
+    foreground = finder.get_foreground_mask(frame)
     #cv.imshow("skin_mask", skin_mask)
     #cv.imshow("foreground_no_noise", foreground)
     cv.imshow("masks_merged", masks_merged)

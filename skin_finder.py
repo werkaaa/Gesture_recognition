@@ -1,6 +1,8 @@
 import numpy as np
 import cv2 as cv
 from colorsys import rgb_to_hsv
+import face_recognition
+
 
 
 class SkinFinder:
@@ -12,12 +14,14 @@ class SkinFinder:
         self.background = None
         self.skin = None
         self.brightness_norm = None
-        self.trackbar_names = None
+        self.trackbars = None
         self.probe_idx = 0
         self.back_thresh = 30
-        self.probing_points = [[100, 300]]
+        self.probing_points = [[300, 300]]
         self.thre_up = 3 * [30]
         self.thre_down = 3 * [30]
+        self.back_thre_up = 3 * [30]
+        self.back_thre_down = 3 * [30]
         self.kernel_size = 3
         self.alpha = 5
 
@@ -29,22 +33,38 @@ class SkinFinder:
             print("wrong coordinates")
 
     def show_trackbars(self):
-        self.trackbar_names = ("H_up", "S_up", "V_up", "H_do", "S_do", "V_do", "back_thresh", "kernel_size", "alpha")
-        track_val = ((40, 70), (30, 70), (30, 70), (40, 70), (30, 70), (30, 70), (30, 120), (3, 10), (5, 10))
+        self.trackbars = [
+            ["skin_Sat", 30, 70],
+            ["skin_H_up", 20, 50],
+            ["skin_V_up", 30, 70],
+            ["skin_H_do", 20, 50],
+            ["skin_V_do", 30, 70],
+            ["back_Sat", 20, 50],
+            ["back_H_up", 30, 70],
+            ["back_V_up", 20, 50],
+            ["back_H_do", 30, 70],
+            ["back_V_do", 30, 120],
+            ["kernel_size", 3, 10],
+            ["alpha", 4, 10]
+        ]
+
         cv.namedWindow("trackbars")
-        for name, values in zip(self.trackbar_names, track_val):
-            cv.createTrackbar(name, "trackbars", values[0], values[1], self.update_trackbars)
+        for name, val, maximum in self.trackbars:
+            cv.createTrackbar(name, "trackbars", val,
+                              maximum, self.update_trackbars)
 
     def update_trackbars(self, a):
-        if self.trackbar_names is None:
+        if self.trackbars is None:
             return
-        values = [cv.getTrackbarPos(bar, "trackbars") for bar in self.trackbar_names]
+        values = [cv.getTrackbarPos(name, "trackbars")
+                  for name, a, b in self.trackbars]
 
-        self.thre_up = values[0:3]
-        self.thre_down = values[3:6]
-        self.back_thresh = values[6]
-        self.kernel_size = values[7]
-        self.alpha = values[8]
+        self.thre_up = [values[i] for i in [1, 0, 2]]
+        self.thre_down = [values[i] for i in [3, 0, 4]]
+        self.back_thre_up = [values[i] for i in [6, 5, 7]]
+        self.back_thre_down = [values[i] for i in [8, 5, 9]]
+        self.kernel_size = values[10]
+        self.alpha = values[11]
         if self.kernel_size == 0:
             self.kernel_size = 1
         if self.alpha == 0:
@@ -86,12 +106,16 @@ class SkinFinder:
     def find_foreground(self, img):
         if self.background is None:
             return np.ones((self.height, self.width), dtype=np.uint8)
-        out = np.empty(img.shape, np.uint8)
-        cv.absdiff(img, self.background, out)
-        res = np.zeros(img.shape[0:2], np.uint8)
-        for i in range(3):
-            res[out[:, :, i] > self.back_thresh] += 1
-        res[res >= 1] = 255
+
+        low = self.background - self.back_thre_down
+        low[np.less(low, 0)] = 0
+        high = self.background + self.back_thre_up
+        high[np.greater(high, 255)] = 255
+
+        back = cv.inRange(img, np.array(low, dtype=np.uint8), np.array(high, dtype=np.uint8))
+        res = np.zeros((self.height, self.width), dtype=np.uint8)
+        res[back == 0] = 255
+
         return res
 
     def add_background(self, img):
@@ -111,8 +135,8 @@ class SkinFinder:
         value = img[:, :, 2]
         value = value - diff
         value[value < 0] = 0
+        value[value > 255] = 255
         value = np.array(value, np.uint8)
-        #print("norm: ", self.brightness_norm, "diff: ", diff, "img: ", img_bri, "val: ",np.mean(value[:size,:size]))
         img[:, :, 2] = value
         img = cv.cvtColor(img, cv.COLOR_HSV2RGB)
         return img
@@ -128,10 +152,17 @@ class SkinFinder:
     def get_important_area(self, img):
         m1 = self.get_skin_mask(img)
         m2 = self.get_foreground_mask(img)
+
         res = np.zeros((self.height, self.width), np.uint8)
         idx = np.equal(m1, m2)
         idx[np.equal(m1, 0)] = False
         res[idx] = 255
+
+        faces = face_recognition.face_locations(img)
+        for left, bottom, right, top in faces:
+            print(top, right, bottom, left)
+            res[left:right, top:bottom] = 0
+
         return res
 
 
@@ -166,8 +197,8 @@ while True:
     frame = cv.drawMarker(frame, tuple(finder.probing_points[finder.probe_idx]), (0, 0, 255))
     skin_mask = finder.get_skin_mask(frame)
     foreground = finder.get_foreground_mask(frame)
-    #cv.imshow("skin_mask", skin_mask)
-    #cv.imshow("foreground_no_noise", foreground)
+    cv.imshow("skin_mask", skin_mask)
+    cv.imshow("foreground_no_noise", foreground)
     cv.imshow("masks_merged", masks_merged)
     cv.imshow("frame", frame)
 

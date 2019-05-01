@@ -158,10 +158,9 @@ class SkinFinder:
         idx[np.equal(m1, 0)] = False
         res[idx] = 255
 
-        faces = face_recognition.face_locations(img)
-        for left, bottom, right, top in faces:
-            print(top, right, bottom, left)
-            res[left:right, top:bottom] = 0
+        #faces = face_recognition.face_locations(img)
+        #for left, bottom, right, top in faces:
+        #    res[left:right, top:bottom] = 0
 
         return res
 

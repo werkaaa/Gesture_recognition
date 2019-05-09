@@ -2,6 +2,16 @@ import math as m
 from skin_finder import SkinFinder
 import numpy as np
 import cv2 as cv
+from model import Net
+
+import torch
+from torch import nn
+from torch.autograd import Variable
+from torch.utils.data.dataset import Dataset
+from torch.utils.data import DataLoader
+from torch.utils.data import TensorDataset
+import torchvision
+from torchvision import datasets, models, transforms
 
 
 def find_hand(img): #zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza iloscia bialych pikseli
@@ -23,6 +33,14 @@ def cut_img(img, i, j, s):
     ans = img[i:i+s, j:j+s]
     return ans
 
+def predict(img, i, j, s):
+    model = Net();
+    model.load_state_dict(torch.load("ready_model.pt"))
+
+    model.eval()
+
+    img = cut_img(img, i, j, s)
+    return model(img)
 
 
 if __name__== "__main__":
@@ -78,6 +96,9 @@ if __name__== "__main__":
     cv.namedWindow('ready', cv.WINDOW_NORMAL)
     cv.imshow('ready', ready)
     cv.waitKey(0)
+
+    prediction = predict(masks_merged, x1, x2, s)
+    print(prediction)
 
 
 

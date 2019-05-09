@@ -12,7 +12,6 @@ from torchvision import datasets, models, transforms
 import os
 import torch.nn.functional as F
 
-import pandas as pd
 import cv2
 
 

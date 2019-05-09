@@ -164,6 +164,15 @@ class SkinFinder:
 
         return res
 
+    # by default places marker on skin probing location
+    def place_marker(self, img, place=None, color=(0, 0, 255)):
+        if place:
+            img = cv.drawMarker(img, tuple(place), color)
+        else:
+            img = cv.drawMarker(img, tuple(finder.probing_points[finder.probe_idx]), color)
+        return img
+
+
 if __name__=="__main__":
     cam = cv.VideoCapture(0)
 
@@ -193,7 +202,7 @@ if __name__=="__main__":
 
         masks_merged = finder.get_important_area(frame)
 
-        frame = cv.drawMarker(frame, tuple(finder.probing_points[finder.probe_idx]), (0, 0, 255))
+        frame = finder.place_marker(frame)
         skin_mask = finder.get_skin_mask(frame)
         foreground = finder.get_foreground_mask(frame)
         cv.imshow("skin_mask", skin_mask)

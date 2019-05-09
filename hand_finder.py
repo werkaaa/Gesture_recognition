@@ -14,23 +14,24 @@ import torchvision
 from torchvision import datasets, models, transforms
 
 
-def find_hand(img): #zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza iloscia bialych pikseli
+def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza iloscia bialych pikseli
     height = img.shape[0]
     width = img.shape[1]
-    s = m.ceil(1.5*(np.sqrt(np.sum(img)/255)))
+    s = m.ceil(1.5 * (np.sqrt(np.sum(img) / 255)))
 
     max_s = 0
     max_i = 0
     max_j = 0
-    for i in range(0, height - s+1, 5):
-        for j in range(0, width - s+1, 5):
-            val = img[i:i+s, j:j+s].sum()
+    for i in range(0, height - s + 1, 5):
+        for j in range(0, width - s + 1, 5):
+            val = img[i:i + s, j:j + s].sum()
             if val > max_s:
                 max_s, max_i, max_j = val, i, j
     return max_j, max_i, s
 
+
 def cut_img(img, i, j, s):
-    ans = img[i:i+s, j:j+s]
+    ans = img[i:i + s, j:j + s]
     return ans
 
 def predict(img, i, j, s):
@@ -40,10 +41,9 @@ def predict(img, i, j, s):
     model.eval()
 
     img = cut_img(img, i, j, s)
-    return model(img)
+    return model(torch.tensor(img))
 
-
-if __name__== "__main__":
+if __name__ == "__main__":
     cam = cv.VideoCapture(0)
 
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))

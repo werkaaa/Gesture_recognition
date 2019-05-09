@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 import torchvision
 from torchvision import datasets, models, transforms
+import PIL
 
 
 def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza iloscia bialych pikseli
@@ -41,7 +42,15 @@ def predict(img, i, j, s):
     model.eval()
 
     img = cut_img(img, i, j, s)
-    return model(torch.tensor(img))
+
+    transformation = transforms.Compose([
+        transforms.Resize((28, 28)),
+        transforms.Grayscale(num_output_channels=1),
+        transforms.ToTensor(),
+    ])
+    img = PIL.Image.fromarray(img)
+    return model(transformation(img).unsqueeze_(0))
+
 
 if __name__ == "__main__":
     cam = cv.VideoCapture(0)
@@ -98,7 +107,7 @@ if __name__ == "__main__":
     cv.waitKey(0)
 
     prediction = predict(masks_merged, x1, x2, s)
-    print(prediction)
+    print(torch.max(prediction, 1))
 
 
 

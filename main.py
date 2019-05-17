@@ -6,7 +6,7 @@ from time import time
 from model import Net
 import torch
 import threading
-
+import webbrowser
 
 class Predictor(threading.Thread):
     def run(self):
@@ -27,19 +27,29 @@ class Predictor(threading.Thread):
                     prediction = p
                 # print(time()-t0)
 
+def show_cats(arr):
+    global catsshown
+    if(np.prod(arr)==1 and not catsshown):
+        webbrowser.open('https://imgflip.com/i/2jlwbi', new=2)
+        catsshown = True
+
 
 if __name__ == "__main__":
     time_interval = 0.5
+
+    loadingcat = [0,0,0,0,0,0]
+    catsshown = True
 
     cam = cv.VideoCapture(0)
 
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
 
+    device = torch.device('cpu')
     classes = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
     print("loading model...")
     model = Net()
-    model.load_state_dict(torch.load("ready_model.pt"))
+    model.load_state_dict(torch.load("ready_model.pt", map_location=device))
     model.eval()
     print("model loaded")
 
@@ -83,6 +93,10 @@ if __name__ == "__main__":
         if key_input == ord('c'):
             finder.clear()
 
+        if key_input == ord('r'): #reset memes
+            catsshown = False
+            loadingcat = [0,0,0,0,0,0]
+
         if time()-t > time_interval:
             with condition:
                 condition.notify()
@@ -92,6 +106,8 @@ if __name__ == "__main__":
         frame = finder.place_marker(frame, hand_position[1], (0, 255, 0))
         frame = finder.place_marker(frame)
         cv.displayStatusBar("frame", classes[prediction])
+        loadingcat[prediction] = 1
+        show_cats(loadingcat)
 
         if debug:
             cv.imshow("masks_merged", masks_merged)

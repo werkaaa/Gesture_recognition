@@ -4,6 +4,7 @@ import numpy as np
 import cv2 as cv
 from model import Net
 
+
 import torch
 from torchvision import datasets, models, transforms
 import PIL
@@ -12,7 +13,7 @@ import PIL
 def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza iloscia bialych pikseli
     height = img.shape[0]
     width = img.shape[1]
-    s = m.ceil(2.5 * (np.sqrt(np.sum(img) / 255)))
+    s = m.ceil(1.5 * (np.sqrt(np.sum(img) / 255)))
 
     max_s = 0
     max_i = 0
@@ -22,6 +23,36 @@ def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza 
             val = img[i:i + s, j:j + s].sum()
             if val > max_s:
                 max_s, max_i, max_j = val, i, j
+
+    margin = int(0.3*s)
+    # if max_j+s+margin < width:
+    #     max_j+=margin
+    # # else:
+    # #     max_j = width-s-1
+    #
+    # if max_i+s+margin < width:
+    #     max_i+=margin
+    # # else:
+    # #     max_i = height-s-1
+
+    s = int(1.6*s)
+    if max_j-margin>0:
+        max_j-=margin
+    else:
+        max_j = 0
+
+    if max_i-margin>0:
+        max_i-=margin
+    else:
+        max_i = 0
+
+    if max_j+s>width:
+        s = width-max_j-1
+
+    if max_i+s>width:
+        s = width-max_i-1
+
+
     return max_j, max_i, s
 
 

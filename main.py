@@ -1,17 +1,59 @@
 import numpy as np
 import cv2 as cv
-import skin_finder as SkinFinder
-import hand_finder
+from skin_finder import SkinFinder
+import hand_finder as hf
+from time import time
+from model import Net
+import torch
+import threading
 
 
-if __name__=="__main__":
+class Predictor(threading.Thread):
+    def run(self):
+        global finder, frame, masks_merged, prediction
+        global condition, hand_position
+        with condition:
+            while True:
+                # t0 = time()
+                condition.wait()
+                masks_merged = finder.get_important_area(frame)
+
+                x1, x2, s = hf.find_hand(masks_merged)
+                hand_position = ((x1, x2), (x1+s, x2+s))
+
+                p = hf.predict(model, masks_merged, x1, x2, s)
+                p = torch.max(p, 1)[1].item()
+                if type(p) is int:
+                    prediction = p
+                # print(time()-t0)
+
+
+if __name__ == "__main__":
+    time_interval = 0.5
+
     cam = cv.VideoCapture(0)
 
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
 
+    classes = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
+    print("loading model...")
+    model = Net()
+    model.load_state_dict(torch.load("ready_model.pt"))
+    model.eval()
+    print("model loaded")
+
+    display = cv.namedWindow("frame", cv.WINDOW_NORMAL)
+    debug = False
+
+    condition = threading.Condition()
+    Predictor(daemon=True).start()
+    prediction = 0
+    hand_position = ((0, 0), (0, 0))
     finder = SkinFinder(width, height)
 
+    masks_merged = np.zeros((width, height))
+    t = 0
     while True:
         ret, frame = cam.read()
         key_input = cv.waitKey(1)
@@ -31,14 +73,28 @@ if __name__=="__main__":
             y = int(input("y: "))
             finder.add_probing_point((x, y))
 
-        masks_merged = finder.get_important_area(frame)
+        if key_input == ord('d'):
+            debug = True
+            finder.show_trackbars()
+            cv.namedWindow("masks_merged", cv.WINDOW_NORMAL)
+            cv.namedWindow("skin_mask", cv.WINDOW_NORMAL)
+            cv.namedWindow("foreground_mask", cv.WINDOW_NORMAL)
 
+        if key_input == ord('c'):
+            finder.clear()
+
+        if time()-t > time_interval:
+            with condition:
+                condition.notify()
+            t = time()
+
+        frame = finder.place_marker(frame, hand_position[0], (0, 255, 0))
+        frame = finder.place_marker(frame, hand_position[1], (0, 255, 0))
         frame = finder.place_marker(frame)
-        #       frame = cv.drawMarker(frame, find_hand(masks_merged)[:2], (0, 255, 0))
+        cv.displayStatusBar("frame", classes[prediction])
 
-        skin_mask = finder.get_skin_mask(frame)
-        foreground = finder.get_foreground_mask(frame)
-        # cv.imshow("skin_mask", skin_mask)
-        # cv.imshow("foreground_no_noise", foreground)
-        cv.imshow("masks_merged", masks_merged)
+        if debug:
+            cv.imshow("masks_merged", masks_merged)
+            cv.imshow("skin_mask", finder.skin_mask)
+            cv.imshow("foreground_mask", finder.foreground_mask)
         cv.imshow("frame", frame)

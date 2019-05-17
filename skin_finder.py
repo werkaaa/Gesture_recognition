@@ -4,7 +4,6 @@ from colorsys import rgb_to_hsv
 import face_recognition
 
 
-
 class SkinFinder:
     brig_norm_size = 10
 
@@ -24,6 +23,8 @@ class SkinFinder:
         self.back_thre_down = 3 * [30]
         self.kernel_size = 3
         self.alpha = 5
+        self.skin_mask = np.zeros((height, width), dtype=np.int8)
+        self.foreground_mask = np.zeros((height, width), dtype=np.int8)
 
     def add_probing_point(self, coordinates: list):
         if coordinates[0] < self.width and coordinates[1] < self.height:
@@ -141,26 +142,28 @@ class SkinFinder:
         img = cv.cvtColor(img, cv.COLOR_HSV2RGB)
         return img
 
-    def get_skin_mask(self, img):
+    def make_skin_mask(self, img):
         mask = self.find_skin(img)
-        return self.rm_noise(mask)
+        self.skin_mask = self.rm_noise(mask)
 
-    def get_foreground_mask(self, img):
+    def make_foreground_mask(self, img):
         mask = self.find_foreground(img)
-        return self.rm_noise(mask)
+        self.foreground_mask = self.rm_noise(mask)
 
     def get_important_area(self, img):
-        m1 = self.get_skin_mask(img)
-        m2 = self.get_foreground_mask(img)
+        self.make_skin_mask(img)
+        self.make_foreground_mask(img)
+        m1 = self.skin_mask
+        m2 = self.foreground_mask
 
         res = np.zeros((self.height, self.width), np.uint8)
         idx = np.equal(m1, m2)
         idx[np.equal(m1, 0)] = False
         res[idx] = 255
 
-        #faces = face_recognition.face_locations(img)
-        #for left, bottom, right, top in faces:
-        #    res[left:right, top:bottom] = 0
+        faces = face_recognition.face_locations(img)
+        for left, bottom, right, top in faces:
+            res[left:right, top:bottom] = 0
 
         return res
 
@@ -169,9 +172,17 @@ class SkinFinder:
         if place:
             img = cv.drawMarker(img, tuple(place), color)
         else:
-            img = cv.drawMarker(img, tuple(finder.probing_points[finder.probe_idx]), color)
+            img = cv.drawMarker(img, tuple(self.probing_points[self.probe_idx]), color)
         return img
 
+    def clear(self):
+        self.background = None
+        self.skin = None
+        self.brightness_norm = None
+        self.probe_idx = 0
+        self.probing_points = [[300, 300]]
+        self.skin_mask = np.zeros((height, width), dtype=np.int8)
+        self.foreground_mask = np.zeros((height, width), dtype=np.int8)
 
 if __name__=="__main__":
     cam = cv.VideoCapture(0)

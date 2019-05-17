@@ -12,7 +12,7 @@ import PIL
 def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza iloscia bialych pikseli
     height = img.shape[0]
     width = img.shape[1]
-    s = m.ceil(2 * (np.sqrt(np.sum(img) / 255)))
+    s = m.ceil(2.5 * (np.sqrt(np.sum(img) / 255)))
 
     max_s = 0
     max_i = 0
@@ -28,8 +28,7 @@ def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza 
 def find_hand_alternative(img):
     width = img.shape[1]
     j = 2*int(width/2)
-    s = int(width/2
-            ) -1
+    s = int(width/2) -1
 
     return j, 0, s
 
@@ -38,7 +37,7 @@ def cut_img(img, i, j, s):
     ans = img[i:i + s, j:j + s]
     return ans
 
-def predict(img, i, j, s):
+def predict(model, img, i, j, s):
     device = torch.device('cpu')
     model = Net();
     model.load_state_dict(torch.load("ready_model.pt", map_location=device))

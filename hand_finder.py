@@ -3,15 +3,8 @@ from skin_finder import SkinFinder
 import numpy as np
 import cv2 as cv
 from model import Net
-import math
 
 import torch
-from torch import nn
-from torch.autograd import Variable
-from torch.utils.data.dataset import Dataset
-from torch.utils.data import DataLoader
-from torch.utils.data import TensorDataset
-import torchvision
 from torchvision import datasets, models, transforms
 import PIL
 

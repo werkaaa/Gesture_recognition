@@ -12,16 +12,24 @@ class Predictor(threading.Thread):
     def run(self):
         global finder, frame, masks_merged, prediction
         global condition, hand_position
+        global alternative
+        global cut, cut_merged
         with condition:
             while True:
                 # t0 = time()
                 condition.wait()
                 masks_merged = finder.get_important_area(frame)
 
-                x1, x2, s = hf.find_hand(masks_merged)
+                if alternative:
+                    x1, x2, s = hf.find_hand_alternative(masks_merged)
+                else:
+                    x1, x2, s = hf.find_hand(masks_merged)
                 hand_position = ((x1, x2), (x1+s, x2+s))
 
-                p = hf.predict(model, masks_merged, x1, x2, s)
+                if s>0:
+                    cut = hf.cut_img(frame, x2, x1, s)
+                    cut_merged = hf.cut_img(masks_merged, x2, x1, s)
+                p = hf.predict(model, masks_merged, x2, x1, s)
                 p = torch.max(p, 1)[1].item()
                 if type(p) is int:
                     prediction = p
@@ -41,6 +49,9 @@ if __name__ == "__main__":
     catsshown = True
 
     cam = cv.VideoCapture(0)
+    alternative = False
+
+    cut = cam
 
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
@@ -63,6 +74,7 @@ if __name__ == "__main__":
     finder = SkinFinder(width, height)
 
     masks_merged = np.zeros((width, height))
+    cut_merged = masks_merged
     t = 0
     while True:
         ret, frame = cam.read()
@@ -89,6 +101,8 @@ if __name__ == "__main__":
             cv.namedWindow("masks_merged", cv.WINDOW_NORMAL)
             cv.namedWindow("skin_mask", cv.WINDOW_NORMAL)
             cv.namedWindow("foreground_mask", cv.WINDOW_NORMAL)
+            cv.namedWindow("cut", cv.WINDOW_NORMAL)
+            cv.namedWindow("cut_merged", cv.WINDOW_NORMAL)
 
         if key_input == ord('c'):
             finder.clear()
@@ -96,6 +110,12 @@ if __name__ == "__main__":
         if key_input == ord('r'): #reset memes
             catsshown = False
             loadingcat = [0,0,0,0,0,0]
+
+        if key_input == ord('l'): #change finding hand
+            if(alternative):
+                alternative = False
+            else:
+                alternative = True
 
         if time()-t > time_interval:
             with condition:
@@ -113,4 +133,7 @@ if __name__ == "__main__":
             cv.imshow("masks_merged", masks_merged)
             cv.imshow("skin_mask", finder.skin_mask)
             cv.imshow("foreground_mask", finder.foreground_mask)
+            cv.imshow("cut", cut)
+            cv.imshow("cut_merged", cut_merged)
         cv.imshow("frame", frame)
+

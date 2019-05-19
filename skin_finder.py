@@ -177,10 +177,9 @@ class SkinFinder:
         self.background = None
         self.skin = None
         self.brightness_norm = None
-        self.probe_idx = 0
-        self.probing_points = [[300, 300]]
-        self.skin_mask = np.zeros((height, width), dtype=np.int8)
-        self.foreground_mask = np.zeros((height, width), dtype=np.int8)
+        self.probing_point = [300, 300]
+        self.skin_mask = np.zeros((self.height, self.width), dtype=np.int8)
+        self.foreground_mask = np.full((self.height, self.width), 255, dtype=np.int8)
 
 
 if __name__ == "__main__":

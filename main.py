@@ -56,7 +56,7 @@ def show_cats(arr):
 if __name__ == "__main__":
     time_interval = 0.5
 
-    loadingcat = [0,0,0,0,0,0]
+    loadingcat = [0, 0, 0, 0, 0, 0]
     catsshown = True
 
     cam = cv.VideoCapture(0)

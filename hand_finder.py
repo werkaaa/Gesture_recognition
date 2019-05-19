@@ -61,22 +61,22 @@ def find_hand_alternative(img):
     j = 2*int(width/2)
     s = int(width/2) -1
 
-    return j, 0, s
+    return j-s, 0, s
 
 
 def cut_img(img, i, j, s):
     ans = img[i:i + s, j:j + s]
     return ans
 
-def predict(model, img, i, j, s):
-    device = torch.device('cpu')
-    model = Net();
-    model.load_state_dict(torch.load("ready_model.pt", map_location=device))
 
-    model.eval()
+def predict(model, img, i, j, s):
+    # device = torch.device('cpu')
+    # model = Net()
+    # model.load_state_dict(torch.load("ready_model.pt", map_location=device))
+    #
+    # model.eval()
 
     img = cut_img(img, i, j, s)
-
 
     transformation = transforms.Compose([
         transforms.Resize((28, 28)),

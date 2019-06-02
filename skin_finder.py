@@ -14,9 +14,8 @@ class SkinFinder:
         self.skin = None
         self.brightness_norm = None
         self.trackbars = None
-        self.probe_idx = 0
         self.back_thresh = 30
-        self.probing_points = [[300, 300]]
+        self.probing_point = (int(width/2), int(height/2))
         self.thre_up = 3 * [30]
         self.thre_down = 3 * [30]
         self.back_thre_up = 3 * [30]
@@ -24,11 +23,11 @@ class SkinFinder:
         self.kernel_size = 3
         self.alpha = 5
         self.skin_mask = np.zeros((height, width), dtype=np.int8)
-        self.foreground_mask = np.zeros((height, width), dtype=np.int8)
+        self.foreground_mask = np.full((height, width), 255, dtype=np.int8)
 
-    def add_probing_point(self, coordinates: list):
-        if coordinates[0] < self.width and coordinates[1] < self.height:
-            self.probing_points.append(coordinates)
+    def change_probing_point(self, x, y):
+        if 0 < x < self.width and 0 < y < self.height:
+            self.probing_point = (x, y)
             print("added skin probing point")
         else:
             print("wrong coordinates")
@@ -74,13 +73,11 @@ class SkinFinder:
     def get_skin_color(self, img):
         if self.skin is None:
             self.skin = []
-        x, y = self.probing_points[self.probe_idx]
+        x, y = self.probing_point
         color = img[y][x]
         r, g, b = color
         res = rgb_to_hsv(r, g, b)
         color = (res[0] * 180, res[1] * 255, res[2])
-        if self.probe_idx < len(self.probing_points) - 1:
-            self.probe_idx += 1
         print("added: ", color)
         self.skin.append(color)
 
@@ -106,7 +103,8 @@ class SkinFinder:
 
     def find_foreground(self, img):
         if self.background is None:
-            return np.ones((self.height, self.width), dtype=np.uint8)
+            # return np.ones((self.height, self.width), dtype=np.uint8)
+            return np.full((self.height, self.width), 255, dtype=np.uint8)
 
         low = self.background - self.back_thre_down
         low[np.less(low, 0)] = 0
@@ -172,19 +170,19 @@ class SkinFinder:
         if place:
             img = cv.drawMarker(img, tuple(place), color)
         else:
-            img = cv.drawMarker(img, tuple(self.probing_points[self.probe_idx]), color)
+            img = cv.drawMarker(img, tuple(self.probing_point), color)
         return img
 
     def clear(self):
         self.background = None
         self.skin = None
         self.brightness_norm = None
-        self.probe_idx = 0
-        self.probing_points = [[300, 300]]
-        self.skin_mask = np.zeros((height, width), dtype=np.int8)
-        self.foreground_mask = np.zeros((height, width), dtype=np.int8)
+        self.probing_point = [300, 300]
+        self.skin_mask = np.zeros((self.height, self.width), dtype=np.int8)
+        self.foreground_mask = np.full((self.height, self.width), 255, dtype=np.int8)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     cam = cv.VideoCapture(0)
 
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))

@@ -8,6 +8,7 @@ import torch
 import threading
 import webbrowser
 
+
 class Predictor(threading.Thread):
     def run(self):
         global finder, frame, masks_merged, prediction
@@ -24,9 +25,8 @@ class Predictor(threading.Thread):
                     x1, x2, s = hf.find_hand_alternative(masks_merged)
                 else:
                     x1, x2, s = hf.find_hand(masks_merged)
-                hand_position = ((x1, x2), (x1+s, x2+s))
-
-                if s>0:
+                hand_position = ((x1, x2), (x1 + s, x2 + s))
+                if s > 0:
                     cut = hf.cut_img(frame, x2, x1, s)
                     cut_merged = hf.cut_img(masks_merged, x2, x1, s)
                 p = hf.predict(model, masks_merged, x2, x1, s)
@@ -35,9 +35,20 @@ class Predictor(threading.Thread):
                     prediction = p
                 # print(time()-t0)
 
+
+def mouse_click(event, x, y, flags, userdata):
+    global finder, frame
+    if event == cv.EVENT_LBUTTONDOWN:
+        finder.change_probing_point(x, y)
+    if event == cv.EVENT_LBUTTONDBLCLK:
+        finder.get_skin_color(frame)
+    if event == cv.EVENT_MBUTTONDOWN:
+        finder.add_background(frame)
+
+
 def show_cats(arr):
     global catsshown
-    if(np.prod(arr)==1 and not catsshown):
+    if (np.prod(arr) == 1 and not catsshown):
         webbrowser.open('https://imgflip.com/i/2jlwbi', new=2)
         catsshown = True
 
@@ -45,7 +56,7 @@ def show_cats(arr):
 if __name__ == "__main__":
     time_interval = 0.5
 
-    loadingcat = [0,0,0,0,0,0]
+    loadingcat = [0, 0, 0, 0, 0, 0]
     catsshown = True
 
     cam = cv.VideoCapture(0)
@@ -65,6 +76,7 @@ if __name__ == "__main__":
     print("model loaded")
 
     display = cv.namedWindow("frame", cv.WINDOW_NORMAL)
+    cv.setMouseCallback("frame", mouse_click)
     debug = False
 
     condition = threading.Condition()
@@ -90,10 +102,10 @@ if __name__ == "__main__":
         if key_input == ord('q'):
             break
 
-        if key_input == ord('a'):
-            x = int(input("x: "))
-            y = int(input("y: "))
-            finder.add_probing_point((x, y))
+        # if key_input == ord('a'):
+        #     x = int(input("x: "))
+        #     y = int(input("y: "))
+        #     finder.change_probing_point(x, y)
 
         if key_input == ord('d'):
             debug = True
@@ -111,8 +123,8 @@ if __name__ == "__main__":
             catsshown = False
             loadingcat = [0,0,0,0,0,0]
 
-        if key_input == ord('l'): #change finding hand
-            if(alternative):
+        if key_input == ord('a'):  # change finding hand
+            if (alternative):
                 alternative = False
             else:
                 alternative = True
@@ -133,7 +145,8 @@ if __name__ == "__main__":
             cv.imshow("masks_merged", masks_merged)
             cv.imshow("skin_mask", finder.skin_mask)
             cv.imshow("foreground_mask", finder.foreground_mask)
-            cv.imshow("cut", cut)
-            cv.imshow("cut_merged", cut_merged)
+            if hand_position[0]!=hand_position[1]:
+                cv.imshow("cut", cut)
+                cv.imshow("cut_merged", cut_merged)
         cv.imshow("frame", frame)
 

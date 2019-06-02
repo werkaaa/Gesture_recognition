@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
 from colorsys import rgb_to_hsv
-import face_recognition
+#import face_recognition
 
 
 class SkinFinder:
@@ -161,9 +161,9 @@ class SkinFinder:
         idx[np.equal(m1, 0)] = False
         res[idx] = 255
 
-        faces = face_recognition.face_locations(img)
-        for left, bottom, right, top in faces:
-            res[left:right, top:bottom] = 0
+        # faces = face_recognition.face_locations(img)
+        # for left, bottom, right, top in faces:
+        #     res[left:right, top:bottom] = 0
 
         return res
 

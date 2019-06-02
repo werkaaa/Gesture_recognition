@@ -60,7 +60,7 @@ if __name__ == "__main__":
     classes = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
     print("loading model...")
     model = Net()
-    model.load_state_dict(torch.load("ready_model.pt", map_location=device))
+    model.load_state_dict(torch.load("ready_model_b.pt", map_location=device))
     model.eval()
     print("model loaded")
 

@@ -72,7 +72,7 @@ def cut_img(img, i, j, s):
 def predict(model, img, i, j, s):
     device = torch.device('cpu')
     model = Net();
-    model.load_state_dict(torch.load("ready_model.pt", map_location=device))
+    model.load_state_dict(torch.load("ready_model_b.pt", map_location=device))
 =======
 >>>>>>> f027f4fccc5644847fec099b702e1de053fa754b
 

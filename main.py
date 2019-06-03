@@ -25,7 +25,7 @@ class Predictor(threading.Thread):
                     x1, x2, s = hf.find_hand_alternative(masks_merged)
                 else:
                     x1, x2, s = hf.find_hand(masks_merged)
-                hand_position = ((x1, x2), (x1 + s, x2 + s))
+                hand_position = ((x1, x2 + s), (x1 + s, x2))
                 if s > 0:
                     cut = hf.cut_img(frame, x2, x1, s)
                     cut_merged = hf.cut_img(masks_merged, x2, x1, s)
@@ -54,13 +54,13 @@ def show_cats(arr):
 
 
 if __name__ == "__main__":
-    time_interval = 0.5
+    time_interval = 0.5  # time between predictions
 
     loadingcat = [0, 0, 0, 0, 0, 0]
     catsshown = True
 
     cam = cv.VideoCapture(0)
-    alternative = False
+    alternative = False  # when True uses predefined area
 
     cut = cam
 
@@ -79,14 +79,15 @@ if __name__ == "__main__":
     cv.setMouseCallback("frame", mouse_click)
     debug = False
 
+    # setting up thread for predicting
     condition = threading.Condition()
     Predictor(daemon=True).start()
     prediction = 0
     hand_position = ((0, 0), (0, 0))
     finder = SkinFinder(width, height)
-
     masks_merged = np.zeros((width, height))
     cut_merged = masks_merged
+
     t = 0
     while True:
         ret, frame = cam.read()
@@ -107,7 +108,7 @@ if __name__ == "__main__":
         #     y = int(input("y: "))
         #     finder.change_probing_point(x, y)
 
-        if key_input == ord('d'):
+        if key_input == ord('d'): # debg mode
             debug = True
             finder.show_trackbars()
             cv.namedWindow("masks_merged", cv.WINDOW_NORMAL)
@@ -119,12 +120,13 @@ if __name__ == "__main__":
         if key_input == ord('c'):
             finder.clear()
 
-        if key_input == ord('r'): #reset memes
+        if key_input == ord('r'):  # reset memes
             catsshown = False
-            loadingcat = [0,0,0,0,0,0]
+            loadingcat = [0, 0, 0, 0, 0, 0]
 
-        if key_input == ord('a'):  # change finding hand
-            if (alternative):
+        # change between finding hand and predefined area
+        if key_input == ord('a'):
+            if alternative:
                 alternative = False
             else:
                 alternative = True
@@ -134,6 +136,8 @@ if __name__ == "__main__":
                 condition.notify()
             t = time()
 
+        frame = cv.rectangle(frame, hand_position[0], hand_position[1],
+                             (0, 255, 0), 5)
         frame = finder.place_marker(frame, hand_position[0], (0, 255, 0))
         frame = finder.place_marker(frame, hand_position[1], (0, 255, 0))
         frame = finder.place_marker(frame)

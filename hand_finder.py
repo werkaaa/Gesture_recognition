@@ -69,11 +69,11 @@ def cut_img(img, i, j, s):
     return ans
 
 def predict(model, img, i, j, s):
-    device = torch.device('cpu')
-    model = Net();
-    model.load_state_dict(torch.load("ready_model_b.pt", map_location=device))
-
-    model.eval()
+    # device = torch.device('cpu')
+    # model = Net();
+    # model.load_state_dict(torch.load("ready_model_b.pt", map_location=device))
+    #
+    # model.eval()
 
     img = cut_img(img, i, j, s)
 

@@ -82,7 +82,7 @@ if __name__ == "__main__":
     # setting up display window
     display = cv.namedWindow("frame", cv.WINDOW_NORMAL)
     cv.resizeWindow("frame", 1000, 800)
-    cv.moveWindow("frame", int(5/4*debug_height) + 100, 0)
+    cv.moveWindow("frame", int(5/4*debug_height) + 450, 0)
     cv.setMouseCallback("frame", mouse_click)
 
     # setting up thread for predicting
@@ -122,7 +122,7 @@ if __name__ == "__main__":
                     cv.destroyWindow(name)
             else:
                 debug = True
-                finder.show_trackbars()
+                finder.show_trackbars(int(5/4*debug_height) + 70, 0)
                 for i, name in enumerate(debug_names):
                     cv.namedWindow(name, cv.WINDOW_NORMAL)
                     cv.resizeWindow(name, int(5/4*debug_height), debug_height)

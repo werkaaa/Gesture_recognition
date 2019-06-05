@@ -34,7 +34,7 @@ class SkinFinder:
         else:
             print("wrong coordinates")
 
-    def show_trackbars(self):
+    def show_trackbars(self, x=None, y=None):
         self.trackbars = [
             ["skin_Sat", 30, 70],
             ["skin_H_up", 20, 50],
@@ -54,6 +54,8 @@ class SkinFinder:
         for name, val, maximum in self.trackbars:
             cv.createTrackbar(name, "trackbars", val,
                               maximum, self._update_trackbars)
+        if x is not None and y is not None:
+            cv.moveWindow("trackbars", x, y)
 
     def hide_trackbars(self):
         cv.destroyWindow("trackbars")

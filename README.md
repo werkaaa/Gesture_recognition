@@ -1,4 +1,5 @@
 # Python_project
+[Weronika Ormaniec](https://github.com/werkaaa), [Adam Kania](https://github.com/remilvus)
 # Rozpoznawanie Gestów
 ## Instrukcja obsługi
 Zanim program zacznie klasyfikować gesty, należy wykonać krótką konfigurację, która obejmuje ustawienie tła oraz pobranie koloru z dłoni (rękawiczki).

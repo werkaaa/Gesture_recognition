@@ -79,6 +79,8 @@ if __name__ == "__main__":
     print("model loaded")
 
     display = cv.namedWindow("frame", cv.WINDOW_NORMAL)
+    cv.resizeWindow("frame", 1000, 800)
+    cv.moveWindow("frame", 0 , 0)
     cv.setMouseCallback("frame", mouse_click)
     debug = False
 
@@ -106,24 +108,32 @@ if __name__ == "__main__":
         if key_input == ord('q'):
             break
 
-        # if key_input == ord('a'):
-        #     x = int(input("x: "))
-        #     y = int(input("y: "))
-        #     finder.change_probing_point(x, y)
+        if key_input == ord('r'):
+            finder.alpha = 1
+            finder.kernel_size = 1
 
         if key_input == ord('d'): # debg mode
-            debug = True
-            finder.show_trackbars()
-            cv.namedWindow("masks_merged", cv.WINDOW_NORMAL)
-            cv.namedWindow("skin_mask", cv.WINDOW_NORMAL)
-            cv.namedWindow("foreground_mask", cv.WINDOW_NORMAL)
-            cv.namedWindow("cut", cv.WINDOW_NORMAL)
-            cv.namedWindow("cut_merged", cv.WINDOW_NORMAL)
+            if debug:
+                debug = False
+                finder.hide_trackbars()
+                cv.destroyWindow("masks_merged")
+                cv.destroyWindow("skin_mask")
+                cv.destroyWindow("foreground_mask")
+                cv.destroyWindow("cut")
+                cv.destroyWindow("cut_merged")
+            else:
+                debug = True
+                finder.show_trackbars()
+                cv.namedWindow("masks_merged", cv.WINDOW_NORMAL)
+                cv.namedWindow("skin_mask", cv.WINDOW_NORMAL)
+                cv.namedWindow("foreground_mask", cv.WINDOW_NORMAL)
+                cv.namedWindow("cut", cv.WINDOW_NORMAL)
+                cv.namedWindow("cut_merged", cv.WINDOW_NORMAL)
 
         if key_input == ord('c'):
             finder.clear()
 
-        if key_input == ord('r'):  # reset memes
+        if key_input == ord('m'):  # reset memes
             catsshown = False
             loadingcat = [0, 0, 0, 0, 0, 0]
 
@@ -144,7 +154,12 @@ if __name__ == "__main__":
         frame = finder.place_marker(frame, hand_position[0], (0, 255, 0))
         frame = finder.place_marker(frame, hand_position[1], (0, 255, 0))
         frame = finder.place_marker(frame)
-        cv.displayStatusBar("frame", classes[prediction])
+        # cv.displayStatusBar("frame", classes[prediction])
+        text_position = (hand_position[0][0] + 20, hand_position[0][1]-20)
+        cv.addText(frame, classes[prediction], text_position, nameFont="Times",
+                   pointSize=30, color=(0, 255, 255))
+
+
         loadingcat[prediction] = 1
         show_cats(loadingcat)
 
@@ -157,3 +172,5 @@ if __name__ == "__main__":
                 cv.imshow("cut_merged", cut_merged)
         cv.imshow("frame", frame)
 
+    cam.release()
+    cv.destroyAllWindows()

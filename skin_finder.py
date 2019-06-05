@@ -46,18 +46,19 @@ class SkinFinder:
             ["back_V_up", 20, 50],
             ["back_H_do", 30, 70],
             ["back_V_do", 30, 120],
-            ["kernel_size", 3, 10],
-            ["alpha", 4, 10]
+            ["kernel_size", self.kernel_size, 10],
+            ["alpha", self.alpha, 10]
         ]
 
         cv.namedWindow("trackbars")
         for name, val, maximum in self.trackbars:
             cv.createTrackbar(name, "trackbars", val,
-                              maximum, self.update_trackbars)
+                              maximum, self._update_trackbars)
 
-    def update_trackbars(self, a):
-        if self.trackbars is None:
-            return
+    def hide_trackbars(self):
+        cv.destroyWindow("trackbars")
+
+    def _update_trackbars(self, dummmy):
         values = [cv.getTrackbarPos(name, "trackbars")
                   for name, a, b in self.trackbars]
 
@@ -80,6 +81,9 @@ class SkinFinder:
         r, g, b = color
         res = rgb_to_hsv(r, g, b)
         color = (res[0] * 180, res[1] * 255, res[2])
+        if 115 < color[0] < 130:
+            self.alpha = 1
+            self.kernel_size = 1
         print("added: ", color)
         self.skin.append(color)
 

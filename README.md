@@ -1,7 +1,7 @@
 # Python_project
 [Weronika Ormaniec](https://github.com/werkaaa), [Adam Kania](https://github.com/remilvus)
 # Rozpoznawanie Gestów
-## Instrukcja obsługi
+## Instrukcja obsługi:
 Zanim program zacznie klasyfikować gesty, należy wykonać krótką konfigurację, która obejmuje ustawienie tła oraz pobranie koloru z dłoni (rękawiczki).
 
 Jeżeli komputer nie ma dostępnej karty graficznej, rekomendujemy ubranie kolorowej rękawiczki, gdyż w takim wypadku program nie korzysta z modułu Face Recognition.
@@ -20,7 +20,15 @@ Jeżeli komputer nie ma dostępnej karty graficznej, rekomendujemy ubranie kolor
 * lewy przycisk myszy (dwa kliknięcia) - pobierz kolor z miejsca kliknięcia
 
 ### Parametry możliwe do ustawienia:
-
+-granice tolerancji dla kolorów(HSV) (dla skóry, dla tła):
+* skin_Sat, back_Sat - saturacja 
+* skin_H_up, back_H_up - odcień (górna granica)
+* skin_H_do, back_H_do - odcień (dolna granica)
+* skin_V_up, back_V_up - moc światła białego (górna granica)
+* skin_V_do, back_V_do - moc światła białego (dolna granica)
+-inne:
+* kernel_size - wielkość obszaru usuwania szumu
+* alpha - mnożnik wygładzania maski
 
 ## Notebook do trenowania modelu:
 https://colab.research.google.com/drive/189vYRl-LEkticxFXlKF3IC8P1YliIxU4
@@ -29,7 +37,7 @@ https://colab.research.google.com/drive/189vYRl-LEkticxFXlKF3IC8P1YliIxU4
 https://github.com/athena15/project_kojak
 
 # Gesture Recognition
-## Manual
+## Manual:
 Before the program starts classifying gestures, some short configuration is needed. You should set the background and sample the color from the image of your hand (glove).
 
 If your computer does not have access to the GPU, please use some vividly colored glove, since in this case, the program does not use the Face Recognition module.
@@ -50,5 +58,5 @@ Left mouse button (double-click) - Sample color from the clicked point
 ## Notebook where the model was trained:
 https://colab.research.google.com/drive/189vYRl-LEkticxFXlKF3IC8P1YliIxU4
 
-## Dataset
+## Dataset:
 https://github.com/athena15/project_kojak

@@ -34,14 +34,14 @@ Before the program starts classifying gestures, some short configuration is need
 If your computer does not have access to the GPU, please use some vividly colored glove, since in this case, the program does not use the Face Recognition module.
 
 ### Configuration:
-B (middle  mouse button)  - Add background
-P  - Sample the color (red cross)
-Q - Quit
-D - Show more configuration windows
-C - clear the background and color samples
-A - Change the way of hand localization (alternatively top-right corner)
-R - Set red glove recognition helper
-M - Suprise!
+* B (middle  mouse button)  - Add background
+* P  - Sample the color (red cross)
+* Q - Quit
+* D - Show more configuration windows
+* C - clear the background and color samples
+* A - Change the way of hand localization (alternatively top-right corner)
+* R - Set red glove recognition helper
+* M - Suprise!
 
 Left mouse button (single-click) - Move the color sampling point
 Left mouse button (double-click) - Sample color from the clicked point 

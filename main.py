@@ -132,7 +132,7 @@ if __name__ == "__main__":
             finder.clear()
 
         if key_input == ord('h'):
-            pass
+            webbrowser.open('https://github.com/werkaaa/Python_project/blob/master/README.md', new = 2)
 
         if key_input == ord('m'):  # reset memes
             catsshown = False
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         frame_to_show = finder.place_marker(frame_to_show, hand_position[0], (0, 255, 0))
         frame_to_show = finder.place_marker(frame_to_show, hand_position[1], (0, 255, 0))
         frame_to_show = finder.place_marker(frame_to_show)
-        cv.displayStatusBar("to get help press 'h'")
+        cv.displayStatusBar('frame', "to get help press 'h'")
         text_position = (hand_position[0][0] + 20, hand_position[0][1]-20)
         cv.addText(frame_to_show, classes[prediction], text_position, nameFont="Times",
                    pointSize=30, color=(0, 255, 255))

@@ -25,12 +25,15 @@ class Predictor(threading.Thread):
                     x1, x2, s = hf.find_hand_alternative(masks_merged)
                 else:
                     x1, x2, s = hf.find_hand(masks_merged)
+
                 hand_position = ((x1, x2 + s), (x1 + s, x2))
+
                 if s > 0:
                     cut = hf.cut_img(frame, x2, x1, s)
                     cut_merged = hf.cut_img(masks_merged, x2, x1, s)
                 p = hf.predict(model, masks_merged, x2, x1, s)
                 p = torch.max(p, 1)[1].item()
+
                 if type(p) is int:
                     prediction = p
                 # print(time()-t0)
@@ -48,7 +51,7 @@ def mouse_click(event, x, y, flags, userdata):
 
 def show_cats(arr):
     global catsshown
-    if (np.prod(arr) == 1 and not catsshown):
+    if np.prod(arr) == 1 and not catsshown:
         webbrowser.open('https://imgflip.com/i/2jlwbi', new=2)
         catsshown = True
 

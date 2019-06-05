@@ -1,8 +1,9 @@
 import numpy as np
 import cv2 as cv
 from colorsys import rgb_to_hsv
-import face_recognition
 from torch import cuda
+if cuda.is_available():
+    import face_recognition
 
 
 class SkinFinder:

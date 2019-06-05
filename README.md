@@ -20,13 +20,13 @@ Jeżeli komputer nie ma dostępnej karty graficznej, rekomendujemy ubranie kolor
 * lewy przycisk myszy (dwa kliknięcia) - pobierz kolor z miejsca kliknięcia
 
 ### Parametry możliwe do ustawienia:
--granice tolerancji dla kolorów(HSV) (dla skóry, dla tła):
+- granice tolerancji dla kolorów(HSV) (dla skóry, dla tła):
 * skin_Sat, back_Sat - saturacja 
 * skin_H_up, back_H_up - odcień (górna granica)
 * skin_H_do, back_H_do - odcień (dolna granica)
 * skin_V_up, back_V_up - moc światła białego (górna granica)
 * skin_V_do, back_V_do - moc światła białego (dolna granica)
--inne:
+- inne:
 * kernel_size - wielkość obszaru usuwania szumu
 * alpha - mnożnik wygładzania maski
 

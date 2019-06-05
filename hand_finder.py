@@ -114,7 +114,6 @@ if __name__ == "__main__":
             finder.add_probing_point((x, y))
 
         masks_merged = finder.get_important_area(frame)
-        #print(masks_merged)
 
         frame = cv.drawMarker(frame, tuple(finder.probing_points[finder.probe_idx]), (0, 0, 255))
 #       frame = cv.drawMarker(frame, find_hand(masks_merged)[:2], (0, 255, 0))

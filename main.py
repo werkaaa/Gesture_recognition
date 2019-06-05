@@ -14,7 +14,7 @@ class Predictor(threading.Thread):
         global finder, frame, masks_merged, prediction
         global condition, hand_position
         global alternative
-        global cut, cut_merged
+        global cut_merged
         with condition:
             while True:
                 # t0 = time()
@@ -57,15 +57,11 @@ def show_cats(arr):
 
 
 if __name__ == "__main__":
-    time_interval = 0.5  # time between predictions
-
     loadingcat = [0, 0, 0, 0, 0, 0]
     catsshown = True
 
     cam = cv.VideoCapture(0)
     alternative = False  # when True uses predefined area
-
-    cut = cam
 
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
@@ -78,11 +74,16 @@ if __name__ == "__main__":
     model.eval()
     print("model loaded")
 
+    # setting debug variables
+    debug = False
+    debug_height = 200  # height of debug windows
+    debug_names = ["masks_merged", "skin_mask", "foreground_mask", "cut_merged"]
+
+    # setting up display window
     display = cv.namedWindow("frame", cv.WINDOW_NORMAL)
     cv.resizeWindow("frame", 1000, 800)
-    cv.moveWindow("frame", 0 , 0)
+    cv.moveWindow("frame", int(5/4*debug_height) + 100, 0)
     cv.setMouseCallback("frame", mouse_click)
-    debug = False
 
     # setting up thread for predicting
     condition = threading.Condition()
@@ -93,7 +94,8 @@ if __name__ == "__main__":
     masks_merged = np.zeros((width, height))
     cut_merged = masks_merged
 
-    t = 0
+    time_interval = 0.5  # minimal time between predictions
+    t = 0  # time of last prediction
     while True:
         ret, frame = cam.read()
         key_input = cv.waitKey(1)
@@ -112,32 +114,31 @@ if __name__ == "__main__":
             finder.alpha = 1
             finder.kernel_size = 1
 
-        if key_input == ord('d'): # debg mode
+        if key_input == ord('d'):  # debug mode
             if debug:
                 debug = False
                 finder.hide_trackbars()
-                cv.destroyWindow("masks_merged")
-                cv.destroyWindow("skin_mask")
-                cv.destroyWindow("foreground_mask")
-                cv.destroyWindow("cut")
-                cv.destroyWindow("cut_merged")
+                for name in debug_names:
+                    cv.destroyWindow(name)
             else:
                 debug = True
                 finder.show_trackbars()
-                cv.namedWindow("masks_merged", cv.WINDOW_NORMAL)
-                cv.namedWindow("skin_mask", cv.WINDOW_NORMAL)
-                cv.namedWindow("foreground_mask", cv.WINDOW_NORMAL)
-                cv.namedWindow("cut", cv.WINDOW_NORMAL)
-                cv.namedWindow("cut_merged", cv.WINDOW_NORMAL)
+                for i, name in enumerate(debug_names):
+                    cv.namedWindow(name, cv.WINDOW_NORMAL)
+                    cv.resizeWindow(name, int(5/4*debug_height), debug_height)
+                    cv.moveWindow(name, 0, i*debug_height + 50)
 
         if key_input == ord('c'):
             finder.clear()
+
+        if key_input == ord('h'):
+            pass
 
         if key_input == ord('m'):  # reset memes
             catsshown = False
             loadingcat = [0, 0, 0, 0, 0, 0]
 
-        # change between finding hand and predefined area
+        # changes between predefined area and hand searching
         if key_input == ord('a'):
             if alternative:
                 alternative = False
@@ -149,16 +150,16 @@ if __name__ == "__main__":
                 condition.notify()
             t = time()
 
-        frame = cv.rectangle(frame, hand_position[0], hand_position[1],
-                             (0, 255, 0), 5)
-        frame = finder.place_marker(frame, hand_position[0], (0, 255, 0))
-        frame = finder.place_marker(frame, hand_position[1], (0, 255, 0))
-        frame = finder.place_marker(frame)
-        # cv.displayStatusBar("frame", classes[prediction])
+        frame_to_show = np.copy(frame)
+        frame_to_show = cv.rectangle(frame_to_show, hand_position[0], hand_position[1],
+                                    (0, 255, 0), 5)
+        frame_to_show = finder.place_marker(frame_to_show, hand_position[0], (0, 255, 0))
+        frame_to_show = finder.place_marker(frame_to_show, hand_position[1], (0, 255, 0))
+        frame_to_show = finder.place_marker(frame_to_show)
+        cv.displayStatusBar("to get help press 'h'")
         text_position = (hand_position[0][0] + 20, hand_position[0][1]-20)
-        cv.addText(frame, classes[prediction], text_position, nameFont="Times",
+        cv.addText(frame_to_show, classes[prediction], text_position, nameFont="Times",
                    pointSize=30, color=(0, 255, 255))
-
 
         loadingcat[prediction] = 1
         show_cats(loadingcat)
@@ -167,10 +168,9 @@ if __name__ == "__main__":
             cv.imshow("masks_merged", masks_merged)
             cv.imshow("skin_mask", finder.skin_mask)
             cv.imshow("foreground_mask", finder.foreground_mask)
-            if hand_position[0]!=hand_position[1]:
-                cv.imshow("cut", cut)
+            if hand_position[0] != hand_position[1]:
                 cv.imshow("cut_merged", cut_merged)
-        cv.imshow("frame", frame)
+        cv.imshow("frame", frame_to_show)
 
     cam.release()
     cv.destroyAllWindows()

@@ -1,12 +1,6 @@
 import math as m
-from skin_finder import SkinFinder
 import numpy as np
-import cv2 as cv
-from model import Net
-
-
-import torch
-from torchvision import datasets, models, transforms
+from torchvision import transforms
 import PIL
 
 
@@ -24,7 +18,7 @@ def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza 
             if val > max_s:
                 max_s, max_i, max_j = val, i, j
 
-    margin = int(0.3*s)
+    margin = int(0.3 * s)
     # if max_j+s+margin < width:
     #     max_j+=margin
     # # else:
@@ -35,46 +29,40 @@ def find_hand(img):  # zwraca wspolrzedne x,y i szerokosc kwadratu z najwieksza 
     # # else:
     # #     max_i = height-s-1
 
-    s = int(1.6*s)
-    if max_j-margin>0:
-        max_j-=margin
+    s = int(1.6 * s)
+    if max_j - margin > 0:
+        max_j -= margin
     else:
         max_j = 0
 
-    if max_i-margin>0:
-        max_i-=margin
+    if max_i - margin > 0:
+        max_i -= margin
     else:
         max_i = 0
 
-    if max_j+s>width:
-        s = width-max_j-1
+    if max_j + s > width:
+        s = width - max_j - 1
 
-    if max_i+s>width:
-        s = width-max_i-1
-
+    if max_i + s > width:
+        s = width - max_i - 1
 
     return max_j, max_i, s
 
 
 def find_hand_alternative(img):
     width = img.shape[1]
-    j = 2*int(width/2)
-    s = int(width/2) -1
+    j = 2 * int(width / 2)
+    s = int(width / 2) - 1
 
-    return j-s, 0, s
+    return j - s, 0, s
 
 
 def cut_img(img, i, j, s):
     ans = img[i:i + s, j:j + s]
     return ans
 
-def predict(model, img, i, j, s):
-    # device = torch.device('cpu')
-    # model = Net();
-    # model.load_state_dict(torch.load("ready_model_b.pt", map_location=device))
-    #
-    # model.eval()
 
+def predict(model, img, i, j, s):
     img = cut_img(img, i, j, s)
 
     transformation = transforms.Compose([
@@ -86,71 +74,71 @@ def predict(model, img, i, j, s):
     return model(transformation(img).unsqueeze_(0))
 
 
-if __name__ == "__main__":
-    cam = cv.VideoCapture(0)
-
-    width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
-    height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
-
-    finder = SkinFinder(width, height)
-    finder.show_trackbars()
-    while True:
-        ret, frame = cam.read()
-        key_input = cv.waitKey(1)
-        if key_input == ord('b'):
-            finder.add_background(frame)
-
-        frame = finder.repair_brightness(frame)
-
-        if key_input == ord('p'):
-            finder.get_skin_color(frame)
-
-        if key_input == ord('q'):
-            break
-
-        if key_input == ord('a'):
-            x = int(input("x: "))
-            y = int(input("y: "))
-            finder.add_probing_point((x, y))
-
-        masks_merged = finder.get_important_area(frame)
-
-        frame = cv.drawMarker(frame, tuple(finder.probing_points[finder.probe_idx]), (0, 0, 255))
-#       frame = cv.drawMarker(frame, find_hand(masks_merged)[:2], (0, 255, 0))
-
-        skin_mask = finder.get_skin_mask(frame)
-        foreground = finder.get_foreground_mask(frame)
-        #cv.imshow("skin_mask", skin_mask)
-        #cv.imshow("foreground_no_noise", foreground)
-        cv.imshow("masks_merged", masks_merged)
-        cv.imshow("frame", frame)
-
-    print(find_hand(masks_merged))
-
-    x1, x2, s = find_hand(masks_merged)
-    cv.namedWindow('image', cv.WINDOW_NORMAL)
-    frame = cv.drawMarker(frame, (x1, x2), (0, 255, 0))
-    frame = cv.drawMarker(frame, (x1+s, x2+s), (0, 255, 0))
-    cv.imshow('image', frame)
-    cv.waitKey(0)
-
-    ready = cut_img(frame, x2, x1, s)
-    cv.namedWindow('ready', cv.WINDOW_NORMAL)
-    cv.imshow('ready', ready)
-    cv.waitKey(0)
-
-    prediction = predict(masks_merged, x1, x2, s)
-    print(torch.max(prediction, 1))
-    print(prediction)
-
-
-
-    # ready2 = cut_img(masks_merged, x2, x1, s)
-    # cv.namedWindow('ready2', cv.WINDOW_NORMAL)
-    # cv.imshow('ready2', masks_merged)
-    # cv.waitKey(0)
-
-    print(find_hand(masks_merged))
-    cam.release()
-    cv.destroyAllWindows()
+# if __name__ == "__main__":
+#     cam = cv.VideoCapture(0)
+#
+#     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
+#     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
+#
+#     finder = SkinFinder(width, height)
+#     finder.show_trackbars()
+#     while True:
+#         ret, frame = cam.read()
+#         key_input = cv.waitKey(1)
+#         if key_input == ord('b'):
+#             finder.add_background(frame)
+#
+#         frame = finder.repair_brightness(frame)
+#
+#         if key_input == ord('p'):
+#             finder.get_skin_color(frame)
+#
+#         if key_input == ord('q'):
+#             break
+#
+#         if key_input == ord('a'):
+#             x = int(input("x: "))
+#             y = int(input("y: "))
+#             finder.add_probing_point((x, y))
+#
+#         masks_merged = finder.get_important_area(frame)
+#
+#         frame = cv.drawMarker(frame, tuple(finder.probing_points[finder.probe_idx]), (0, 0, 255))
+# #       frame = cv.drawMarker(frame, find_hand(masks_merged)[:2], (0, 255, 0))
+#
+#         skin_mask = finder.get_skin_mask(frame)
+#         foreground = finder.get_foreground_mask(frame)
+#         #cv.imshow("skin_mask", skin_mask)
+#         #cv.imshow("foreground_no_noise", foreground)
+#         cv.imshow("masks_merged", masks_merged)
+#         cv.imshow("frame", frame)
+#
+#     print(find_hand(masks_merged))
+#
+#     x1, x2, s = find_hand(masks_merged)
+#     cv.namedWindow('image', cv.WINDOW_NORMAL)
+#     frame = cv.drawMarker(frame, (x1, x2), (0, 255, 0))
+#     frame = cv.drawMarker(frame, (x1+s, x2+s), (0, 255, 0))
+#     cv.imshow('image', frame)
+#     cv.waitKey(0)
+#
+#     ready = cut_img(frame, x2, x1, s)
+#     cv.namedWindow('ready', cv.WINDOW_NORMAL)
+#     cv.imshow('ready', ready)
+#     cv.waitKey(0)
+#
+#     prediction = predict(masks_merged, x1, x2, s)
+#     print(torch.max(prediction, 1))
+#     print(prediction)
+#
+#
+#
+#     # ready2 = cut_img(masks_merged, x2, x1, s)
+#     # cv.namedWindow('ready2', cv.WINDOW_NORMAL)
+#     # cv.imshow('ready2', masks_merged)
+#     # cv.waitKey(0)
+#
+#     print(find_hand(masks_merged))
+#     cam.release()
+#     cv.destroyAllWindows()
 

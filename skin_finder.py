@@ -89,7 +89,7 @@ class SkinFinder:
         print("added: ", color)
         self.skin.append(color)
 
-    def find_skin(self, img):
+    def _find_skin(self, img):
         if self.skin is None:
             return np.ones((self.height, self.width), np.uint8)
         img = cv.cvtColor(img, cv.COLOR_RGB2HSV)
@@ -103,13 +103,13 @@ class SkinFinder:
             result[part_res[i] != 0] = 255
         return result
 
-    def rm_noise(self, img):
+    def _remove_noise(self, img):
         kernel = (self.kernel_size, self.kernel_size)
         img = cv.erode(img, np.ones(kernel, np.uint8))
         kernel = (self.kernel_size * self.alpha, self.kernel_size * self.alpha)
         return cv.dilate(img, np.ones(kernel, np.uint8))
 
-    def find_foreground(self, img):
+    def _find_foreground(self, img):
         if self.background is None:
             # return np.ones((self.height, self.width), dtype=np.uint8)
             return np.full((self.height, self.width), 255, dtype=np.uint8)
@@ -148,17 +148,17 @@ class SkinFinder:
         img = cv.cvtColor(img, cv.COLOR_HSV2RGB)
         return img
 
-    def make_skin_mask(self, img):
-        mask = self.find_skin(img)
-        self.skin_mask = self.rm_noise(mask)
+    def _make_skin_mask(self, img):
+        mask = self._find_skin(img)
+        self.skin_mask = self._remove_noise(mask)
 
-    def make_foreground_mask(self, img):
-        mask = self.find_foreground(img)
-        self.foreground_mask = self.rm_noise(mask)
+    def _make_foreground_mask(self, img):
+        mask = self._find_foreground(img)
+        self.foreground_mask = self._remove_noise(mask)
 
     def get_important_area(self, img):
-        self.make_skin_mask(img)
-        self.make_foreground_mask(img)
+        self._make_skin_mask(img)
+        self._make_foreground_mask(img)
         m1 = self.skin_mask
         m2 = self.foreground_mask
 
@@ -191,42 +191,42 @@ class SkinFinder:
         self.foreground_mask = np.full((self.height, self.width), 255, dtype=np.int8)
 
 
-if __name__ == "__main__":
-    cam = cv.VideoCapture(0)
-
-    width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
-    height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
-
-    finder = SkinFinder(width, height)
-    finder.show_trackbars()
-    while True:
-        ret, frame = cam.read()
-        key_input = cv.waitKey(1)
-        if key_input == ord('b'):
-            finder.add_background(frame)
-
-        frame = finder.repair_brightness(frame)
-
-        if key_input == ord('p'):
-            finder.get_skin_color(frame)
-
-        if key_input == ord('q'):
-            break
-
-        if key_input == ord('a'):
-            x = int(input("x: "))
-            y = int(input("y: "))
-            finder.add_probing_point((x, y))
-
-        masks_merged = finder.get_important_area(frame)
-
-        frame = finder.place_marker(frame)
-        skin_mask = finder.get_skin_mask(frame)
-        foreground = finder.get_foreground_mask(frame)
-        cv.imshow("skin_mask", skin_mask)
-        cv.imshow("foreground_no_noise", foreground)
-        cv.imshow("masks_merged", masks_merged)
-        cv.imshow("frame", frame)
-
-    cam.release()
-    cv.destroyAllWindows()
+# if __name__ == "__main__":
+#     cam = cv.VideoCapture(0)
+#
+#     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
+#     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
+#
+#     finder = SkinFinder(width, height)
+#     finder.show_trackbars()
+#     while True:
+#         ret, frame = cam.read()
+#         key_input = cv.waitKey(1)
+#         if key_input == ord('b'):
+#             finder.add_background(frame)
+#
+#         frame = finder.repair_brightness(frame)
+#
+#         if key_input == ord('p'):
+#             finder.get_skin_color(frame)
+#
+#         if key_input == ord('q'):
+#             break
+#
+#         if key_input == ord('a'):
+#             x = int(input("x: "))
+#             y = int(input("y: "))
+#             finder.add_probing_point((x, y))
+#
+#         masks_merged = finder.get_important_area(frame)
+#
+#         frame = finder.place_marker(frame)
+#         skin_mask = finder.get_skin_mask(frame)
+#         foreground = finder.get_foreground_mask(frame)
+#         cv.imshow("skin_mask", skin_mask)
+#         cv.imshow("foreground_no_noise", foreground)
+#         cv.imshow("masks_merged", masks_merged)
+#         cv.imshow("frame", frame)
+#
+#     cam.release()
+#     cv.destroyAllWindows()

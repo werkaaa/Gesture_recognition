@@ -5,6 +5,7 @@ import hand_finder as hf
 from time import time
 from model import Net
 import torch
+import torch.cuda
 import threading
 import webbrowser
 
@@ -29,7 +30,7 @@ class Predictor(threading.Thread):
                 hand_position = ((x1, x2 + s), (x1 + s, x2))
 
                 if s > 0:
-                    cut = hf.cut_img(frame, x2, x1, s)
+                    # cut = hf.cut_img(frame, x2, x1, s)
                     cut_merged = hf.cut_img(masks_merged, x2, x1, s)
                 p = hf.predict(model, masks_merged, x2, x1, s)
                 p = torch.max(p, 1)[1].item()
@@ -66,7 +67,10 @@ if __name__ == "__main__":
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
 
-    device = torch.device('cpu')
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
     classes = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
     print("loading model...")
     model = Net()
@@ -158,6 +162,8 @@ if __name__ == "__main__":
         frame_to_show = finder.place_marker(frame_to_show)
         cv.displayStatusBar('frame', "to get help press 'h'")
         text_position = (hand_position[0][0] + 20, hand_position[0][1]-20)
+        if text_position[1] > height:
+            text_position = (text_position[0], height - 10)
         cv.addText(frame_to_show, classes[prediction], text_position, nameFont="Times",
                    pointSize=30, color=(0, 255, 255))
 

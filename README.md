@@ -1,4 +1,4 @@
-# Python_project
+# Gesture recognition
 [Weronika Ormaniec](https://github.com/werkaaa), [Adam Kania](https://github.com/remilvus)
 # Rozpoznawanie Gestów
 ## Instrukcja obsługi:

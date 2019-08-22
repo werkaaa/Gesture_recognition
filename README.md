@@ -64,7 +64,7 @@ Left mouse button (double-click) - Sample color from the clicked point
     * skin_V_do, back_V_do - value (lower boundary)
 * other:
     * kernel_size - size of noise reduction area
-    * alpha - multiplier of mnożnik wygładzania maski
+    * alpha - mask smothing multiplier
 
 ## Notebook where the model was trained:
 https://colab.research.google.com/drive/189vYRl-LEkticxFXlKF3IC8P1YliIxU4

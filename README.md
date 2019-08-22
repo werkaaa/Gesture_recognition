@@ -20,7 +20,7 @@ Jeżeli komputer nie ma dostępnej karty graficznej, rekomendujemy ubranie kolor
 * lewy przycisk myszy (dwa kliknięcia) - pobierz kolor z miejsca kliknięcia
 
 ### Parametry możliwe do ustawienia:
-* ranice tolerancji dla kolorów(HSV) (dla skóry, dla tła):
+* granice tolerancji dla kolorów(HSV) (dla skóry, dla tła):
     * skin_Sat, back_Sat - saturacja 
     * skin_H_up, back_H_up - odcień (górna granica)
     * skin_H_do, back_H_do - odcień (dolna granica)
@@ -54,6 +54,17 @@ If your computer does not have access to the GPU, please use some vividly colore
 
 Left mouse button (single-click) - Move the color sampling point
 Left mouse button (double-click) - Sample color from the clicked point
+
+### Settable parameters:
+* toleration boundaries for colors (in HSV format) of skin and background:
+    * skin_Sat, back_Sat - saturation 
+    * skin_H_up, back_H_up - hue (upper boundary)
+    * skin_H_do, back_H_do - hue (lower boundary)
+    * skin_V_up, back_V_up - value (upper boundary)
+    * skin_V_do, back_V_do - value (lower boundary)
+* other:
+    * kernel_size - size of noise reduction area
+    * alpha - multiplier of mnożnik wygładzania maski
 
 ## Notebook where the model was trained:
 https://colab.research.google.com/drive/189vYRl-LEkticxFXlKF3IC8P1YliIxU4

@@ -6,6 +6,8 @@ import webbrowser
 from constants import *
 from typing import List
 from functools import reduce
+import time
+
 
 class App():
     def __init__(self):
@@ -48,9 +50,9 @@ class App():
                 if background_change < BACKGROUND_DIFF:
                     self.background = np.copy(background_candidate)
                     print("background updated")
-
+                else:
+                    print("background update failed")
                 background_candidate = np.copy(frame)
-                print("background update failed")
                 background_counter = 0
             background_counter += 1
 
@@ -58,20 +60,24 @@ class App():
             should_close = self.process_input()
             if should_close:
                 break
-            
+
             if self.search_hand:
                 gestures = self.detect_objects(frame)
             else:
                 gestures = [GestureData([0, 0, 1, 1], 0, 1.)]
 
-            mask = cv2.absdiff(self.background, frame)
-            _, mask = cv2.threshold(mask, BACKGROUND_DIFF_PIX, 255, cv2.THRESH_BINARY)
-            mask = np.min(mask, axis=2)
+            # cv2.cvtColor(self.background, cv2.COLOR_BGR2HSV)
+            # mask = cv2.absdiff(self.background, frame)
+            mask = cv2.absdiff(cv2.cvtColor(self.background, cv2.COLOR_BGR2HSV), cv2.cvtColor(frame, cv2.COLOR_BGR2HSV))
+            mask = np.mean(mask, axis=2)
+            _, mask = cv2.threshold(mask, 20, 255, cv2.THRESH_BINARY)
 
-            gestures = self.make_predictions(gestures, mask)
+            gestures, img = self.make_predictions(gestures, mask)
             frame_to_show = self.annotate_frame(frame, gestures)
 
             cv2.imshow("frame", frame_to_show)
+            cv2.imshow("img", img)
+            # time.sleep(2)
 
     def annotate_frame(self, frame, gestures: List[GestureData]):
         frame_to_show = np.copy(frame)
@@ -91,6 +97,7 @@ class App():
             cv2.addText(frame_to_show, f"{hand.gesture_label} conf={score:.2f}", text_position,
                         nameFont="Times",
                         pointSize=30, color=(0, 255, 255))
+
 
         cv2.displayStatusBar('frame', "to get help press 'h'")
 
@@ -115,24 +122,26 @@ class App():
         return self.hand_detector.process_image(img)
 
     def make_predictions(self, gestures: List[GestureData], frame):
+        img = frame
         for hand in gestures:
             box = hand.box
             y1, x1 = int(box[1] * self.width), int(box[0] * self.height)
             y2, x2 = int(box[3] * self.width), int(box[2] * self.height)
 
-            x1, y1 = self._clip_image_coord(x1, y1)
-            x2, y2 = self._clip_image_coord(x2, y2)
-            img = frame[x1:x2, y1:y2]
+            margin = 50
+            x1, y1 = self._clip_image_coord(x1-margin, y1-margin)
+            x2, y2 = self._clip_image_coord(x2+margin*2, y2+margin)
+            img = frame[x1:x2, y1:y2] # x - vertical, y - horizontal
 
             label = self.classifier.classify(img)
             hand.gesture_label = label
             # hand.gesture_score = score
 
-        return gestures
+        return gestures, img
 
     def _clip_image_coord(self, x, y):
         x = np.clip(x, 0, self.height)
-        y = np.clip(x, 0, self.width)
+        y = np.clip(y, 0, self.width)
         return x, y
 
     def __del__(self):

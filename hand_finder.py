@@ -2,7 +2,7 @@ import math as m
 from skin_finder import SkinFinder
 import numpy as np
 import cv2 as cv
-from model import Net
+# from model import Net
 
 
 # import torch

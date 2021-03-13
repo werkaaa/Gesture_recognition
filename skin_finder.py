@@ -1,9 +1,9 @@
 import numpy as np
 import cv2 as cv
 from colorsys import rgb_to_hsv
-from torch import cuda
-if cuda.is_available():
-    import face_recognition
+# from torch import cuda
+# if cuda.is_available():
+#     import face_recognition
 
 
 class SkinFinder:
@@ -167,10 +167,10 @@ class SkinFinder:
         idx[np.equal(m1, 0)] = False
         res[idx] = 255
 
-        if cuda.is_available():
-            faces = face_recognition.face_locations(img)
-            for left, bottom, right, top in faces:
-                res[left:right, top:bottom] = 0
+        # if cuda.is_available():
+        #     faces = face_recognition.face_locations(img)
+        #     for left, bottom, right, top in faces:
+        #         res[left:right, top:bottom] = 0
 
         return res
 

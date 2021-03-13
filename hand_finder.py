@@ -5,8 +5,8 @@ import cv2 as cv
 from model import Net
 
 
-import torch
-from torchvision import datasets, models, transforms
+# import torch
+# from torchvision import datasets, models, transforms
 import PIL
 
 
@@ -77,13 +77,13 @@ def predict(model, img, i, j, s):
 
     img = cut_img(img, i, j, s)
 
-    transformation = transforms.Compose([
-        transforms.Resize((28, 28)),
-        transforms.Grayscale(num_output_channels=1),
-        transforms.ToTensor(),
-    ])
-    img = PIL.Image.fromarray(img)
-    return model(transformation(img).unsqueeze_(0))
+    # transformation = transforms.Compose([
+    #     transforms.Resize((28, 28)),
+    #     transforms.Grayscale(num_output_channels=1),
+    #     transforms.ToTensor(),
+    # ])
+    # img = PIL.Image.fromarray(img)
+    return 0 #model(transformation(img).unsqueeze_(0))
 
 
 if __name__ == "__main__":
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     cv.waitKey(0)
 
     prediction = predict(masks_merged, x1, x2, s)
-    print(torch.max(prediction, 1))
+    # print(torch.max(prediction, 1))
     print(prediction)
 
 

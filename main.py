@@ -3,8 +3,8 @@ import cv2 as cv
 from skin_finder import SkinFinder
 import hand_finder as hf
 from time import time
-from model import Net
-import torch
+# from model import Net
+# import torch
 import threading
 import webbrowser
 
@@ -31,8 +31,9 @@ class Predictor(threading.Thread):
                 if s > 0:
                     cut = hf.cut_img(frame, x2, x1, s)
                     cut_merged = hf.cut_img(masks_merged, x2, x1, s)
-                p = hf.predict(model, masks_merged, x2, x1, s)
-                p = torch.max(p, 1)[1].item()
+                # p = hf.predict(model, masks_merged, x2, x1, s)
+                # p = torch.max(p, 1)[1].item()
+                p = 0
 
                 if type(p) is int:
                     prediction = p
@@ -66,13 +67,13 @@ if __name__ == "__main__":
     width = int(cam.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cam.get(cv.CAP_PROP_FRAME_HEIGHT))
 
-    device = torch.device('cpu')
+    # device = torch.device('cpu')
     classes = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
-    print("loading model...")
-    model = Net()
-    model.load_state_dict(torch.load("ready_model_b.pt", map_location=device))
-    model.eval()
-    print("model loaded")
+    # print("loading model...")
+    # model = Net()
+    # model.load_state_dict(torch.load("ready_model_b.pt", map_location=device))
+    # model.eval()
+    # print("model loaded")
 
     # setting debug variables
     debug = False

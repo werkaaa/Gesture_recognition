@@ -5,7 +5,7 @@ from gesture_classifier import GestureClassifier
 import webbrowser
 from constants import *
 from typing import List
-
+from functools import reduce
 
 class App():
     def __init__(self):
@@ -18,6 +18,7 @@ class App():
         self.search_hand = SEARCH_FOR_HAND  # when False detector uses predefined area
         self.classes = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
         self.classifier = GestureClassifier()
+        self.background = None
 
         # other
         self.display = cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
@@ -29,10 +30,31 @@ class App():
         # self.time_interval = 0.5  # minimal time between predictions
 
     def run(self):
-        t = 0  # time of last prediction
+        _, frame = self.cam.read()
+        self.background = np.copy(frame)
+        background_counter = 0
+        background_candidate = np.copy(frame)
 
         while True:
-            ret, frame = self.cam.read()
+            _, frame = self.cam.read()
+
+            if background_counter > BACKGROUND_TIMER:
+                frameDelta = cv2.absdiff(background_candidate, frame)
+                _, thresh = cv2.threshold(frameDelta, BACKGROUND_DIFF_PIX, 1, cv2.THRESH_BINARY)
+                # thresh = frameDelta
+
+                background_change = np.sum(thresh) / np.prod(frame.shape)
+                print(f"background_change={background_change}")
+                print()
+                if background_change < BACKGROUND_DIFF:
+                    self.background = np.copy(background_candidate)
+                    print("background updated")
+
+                background_candidate = np.copy(frame)
+                print("background update failed")
+                background_counter = 0
+            background_counter += 1
+
 
             should_close = self.process_input()
             if should_close:
@@ -42,9 +64,12 @@ class App():
                 gestures = self.detect_objects(frame)
             else:
                 gestures = [GestureData([0, 0, 1, 1], 0, 1.)]
-                
-            gestures = self.make_predictions(gestures, frame)
 
+            mask = cv2.absdiff(self.background, frame)
+            _, mask = cv2.threshold(mask, BACKGROUND_DIFF_PIX, 255, cv2.THRESH_BINARY)
+            mask = np.min(mask, axis=2)
+
+            gestures = self.make_predictions(gestures, mask)
             frame_to_show = self.annotate_frame(frame, gestures)
 
             cv2.imshow("frame", frame_to_show)

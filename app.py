@@ -16,7 +16,6 @@ class App():
 
         # detector & classifier setup
         self.search_hand = SEARCH_FOR_HAND  # when False detector uses predefined area
-        self.classes = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
         self.classifier = GestureClassifier()
         self.background = None
 
@@ -89,7 +88,7 @@ class App():
             frame_to_show = cv2.rectangle(frame_to_show, p1, p2, (0, 255, 0), 5)
             text_position = (p1[0] + 20, p2[1] - 20)
 
-            cv2.addText(frame_to_show, f"conf={score:.2f}", text_position,
+            cv2.addText(frame_to_show, f"{hand.gesture_label} conf={score:.2f}", text_position,
                         nameFont="Times",
                         pointSize=30, color=(0, 255, 255))
 
@@ -125,9 +124,9 @@ class App():
             x2, y2 = self._clip_image_coord(x2, y2)
             img = frame[x1:x2, y1:y2]
 
-            label, score = self.classifier.classify(img)
+            label = self.classifier.classify(img)
             hand.gesture_label = label
-            hand.gesture_score = score
+            # hand.gesture_score = score
 
         return gestures
 

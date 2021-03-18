@@ -66,18 +66,26 @@ class App():
             else:
                 gestures = [GestureData([0, 0, 1, 1], 0, 1.)]
 
-            # cv2.cvtColor(self.background, cv2.COLOR_BGR2HSV)
-            # mask = cv2.absdiff(self.background, frame)
-            mask = cv2.absdiff(cv2.cvtColor(self.background, cv2.COLOR_BGR2HSV), cv2.cvtColor(frame, cv2.COLOR_BGR2HSV))
-            mask = np.mean(mask, axis=2)
-            _, mask = cv2.threshold(mask, 20, 255, cv2.THRESH_BINARY)
+            mask = self._get_mask(frame)
 
             gestures, img = self.make_predictions(gestures, mask)
             frame_to_show = self.annotate_frame(frame, gestures)
 
             cv2.imshow("frame", frame_to_show)
-            cv2.imshow("img", img)
+            cv2.imshow("gesture mask", img)
             # time.sleep(2)
+
+    def _get_mask(self, frame):
+        mask = cv2.absdiff(cv2.cvtColor(self.background, cv2.COLOR_BGR2HSV),
+                           cv2.cvtColor(frame, cv2.COLOR_BGR2HSV))
+        mask = np.mean(mask, axis=2)
+        _, mask = cv2.threshold(mask, 20, 255, cv2.THRESH_BINARY)
+        element = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (
+            2 * EROSION_SIZE + 1, 2 * EROSION_SIZE + 1),
+                                            (EROSION_SIZE, EROSION_SIZE))
+        mask = cv2.erode(mask, element)
+        mask = cv2.dilate(mask, element)
+        return mask
 
     def annotate_frame(self, frame, gestures: List[GestureData]):
         frame_to_show = np.copy(frame)
@@ -123,21 +131,33 @@ class App():
 
     def make_predictions(self, gestures: List[GestureData], frame):
         img = frame
+        invalid = set()
         for hand in gestures:
             box = hand.box
             y1, x1 = int(box[1] * self.width), int(box[0] * self.height)
             y2, x2 = int(box[3] * self.width), int(box[2] * self.height)
 
-            margin = 50
+            margin = 30
             x1, y1 = self._clip_image_coord(x1-margin, y1-margin)
             x2, y2 = self._clip_image_coord(x2+margin*2, y2+margin)
             img = frame[x1:x2, y1:y2] # x - vertical, y - horizontal
+
+            if self._calculate_cover(img) < OBJECT_MIN_COVER or \
+                img.shape[0] < MIN_WINDOW_SIZE or \
+                img.shape[1] < MIN_WINDOW_SIZE:
+                invalid.add(hand)
+                continue
 
             label = self.classifier.classify(img)
             hand.gesture_label = label
             # hand.gesture_score = score
 
+        gestures = [g for g in gestures if g not in invalid]
         return gestures, img
+
+    @staticmethod
+    def _calculate_cover(array):
+        return np.sum(array != 0) / np.prod(array.shape)
 
     def _clip_image_coord(self, x, y):
         x = np.clip(x, 0, self.height)

@@ -88,13 +88,14 @@ class App():
 
             box = hand.box
             score = hand.object_score
+            cscore = hand.gesture_score
 
             p1 = (int(box[1] * self.width), int(box[0] * self.height))
             p2 = (int(box[3] * self.width), int(box[2] * self.height))
             frame_to_show = cv2.rectangle(frame_to_show, p1, p2, (0, 255, 0), 5)
             text_position = (p1[0] + 20, p2[1] - 20)
 
-            cv2.addText(frame_to_show, f"{hand.gesture_label} conf={score:.2f}", text_position,
+            cv2.addText(frame_to_show, f"{hand.gesture_label} conf={score:.2f},{cscore:.2f}", text_position,
                         nameFont="Times",
                         pointSize=30, color=(0, 255, 255))
 
@@ -133,9 +134,9 @@ class App():
             x2, y2 = self._clip_image_coord(x2+margin*2, y2+margin)
             img = frame[x1:x2, y1:y2] # x - vertical, y - horizontal
 
-            label = self.classifier.classify(img)
+            label, score = self.classifier.classify(img)
             hand.gesture_label = label
-            # hand.gesture_score = score
+            hand.gesture_score = score
 
         return gestures, img
 

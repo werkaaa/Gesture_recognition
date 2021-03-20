@@ -2,9 +2,11 @@ import numpy as np
 import cv2
 from object_detector import ObjectDetector
 from gesture_classifier import GestureClassifier
+from diode import Diode
 import webbrowser
 from constants import *
 from typing import List
+
 from functools import reduce
 import time
 
@@ -22,13 +24,17 @@ class App():
         self.background = None
 
         # other
-        self.display = cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("frame", WINDOW_WIDTH, WINDOW_HEIGHT)
-        cv2.moveWindow("frame", WINDOW_WIDTH//3, WINDOW_HEIGHT//3)
+        if not HEADLESS:
+            self.display = cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("frame", WINDOW_WIDTH, WINDOW_HEIGHT)
+            cv2.moveWindow("frame", WINDOW_WIDTH//3, WINDOW_HEIGHT//3)
 
         # setting up hand detector
         self.hand_detector = ObjectDetector()
         # self.time_interval = 0.5  # minimal time between predictions
+
+        # diodes
+        self.diode = Diode()
 
     def run(self):
         _, frame = self.cam.read()
@@ -69,11 +75,17 @@ class App():
             mask = self._get_mask(frame)
 
             gestures, img = self.make_predictions(gestures, mask)
-            frame_to_show = self.annotate_frame(frame, gestures)
 
-            cv2.imshow("frame", frame_to_show)
-            cv2.imshow("gesture mask", img)
-            # time.sleep(2)
+
+            if not HEADLESS:
+                frame_to_show = self.annotate_frame(frame, gestures)
+                cv2.imshow("frame", frame_to_show)
+                cv2.imshow("gesture mask", img)
+
+            if len(gestures) > 0:
+                self.diode.shine_all(gestures)
+            time.sleep(0.001)
+
 
     def _get_mask(self, frame):
         mask = cv2.absdiff(cv2.cvtColor(self.background, cv2.COLOR_BGR2HSV),

@@ -1,13 +1,12 @@
 import cv2
 from tflite_runtime.interpreter import Interpreter
 import numpy as np
-from PIL import Image
+from constants import *
 
 class GestureClassifier():
     def __init__(self):
-        self._interpreter = Interpreter('model/model.tflite')
+        self._interpreter = Interpreter(str(GESTURE_CLASSIFICATION_PATH))
         self._interpreter.allocate_tensors()
-        self.labels = ['C', 'L', 'fist', 'okay', 'palm', 'peace']
 
     def set_input_tensor(self, image):
         tensor_index = self._interpreter.get_input_details()[0]['index']
@@ -20,7 +19,6 @@ class GestureClassifier():
 
     def classify(self, image):
         """Returns predicted gesture given an image."""
-        # image = image.resize((256, 256), Image.BILINEAR)
         image = cv2.resize(image, (256, 256))
 
         image = np.asarray(image).reshape(256, 256, 1)
@@ -29,4 +27,5 @@ class GestureClassifier():
         output_details = self._interpreter.get_output_details()[0]
         output = np.squeeze(self._interpreter.get_tensor(output_details['index']))
         s = self.softmax(output)
-        return self.labels[np.argmax(s)], np.max(s)
+        print(s)
+        return LABELS[np.argmax(s)], np.max(s)

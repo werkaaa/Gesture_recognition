@@ -4,7 +4,7 @@
 Aplikacja na Raspberry Pi. Może oznaczać gesty na obrazie z kamery oraz sygnalizować klasyfikację diodami.
 
 ## Przykłady działania:
-Wszystkie dostępne gesty pokazane w kolejności: C, L, pięść, ok, cała dłoń, Victoria  
+Wszystkie dostępne gesty pokazane w kolejności: C, L, pięść, ok, cała dłoń, victoria  
 ![All gestures showed one by one](https://github.com/werkaaa/Gesture_recognition/blob/raspberry-pi/examples/all_gestures.gif)  
 
 Dwa gesty (C, ok) pokazane naraz  

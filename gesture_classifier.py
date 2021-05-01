@@ -27,5 +27,5 @@ class GestureClassifier():
         output_details = self._interpreter.get_output_details()[0]
         output = np.squeeze(self._interpreter.get_tensor(output_details['index']))
         s = self.softmax(output)
-        print(s)
+
         return LABELS[np.argmax(s)], np.max(s)

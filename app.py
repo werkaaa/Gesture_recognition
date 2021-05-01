@@ -19,7 +19,6 @@ class App():
         self.height = int(self.cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         # detector & classifier setup
-        self.search_hand = SEARCH_FOR_HAND  # when False detector uses predefined area
         self.classifier = GestureClassifier()
         self.background = None
 
@@ -48,7 +47,6 @@ class App():
             if background_counter > BACKGROUND_TIMER:
                 frameDelta = cv2.absdiff(background_candidate, frame)
                 _, thresh = cv2.threshold(frameDelta, BACKGROUND_DIFF_PIX, 1, cv2.THRESH_BINARY)
-                # thresh = frameDelta
 
                 background_change = np.sum(thresh) / np.prod(frame.shape)
                 print(f"background_change={background_change}")
@@ -67,15 +65,11 @@ class App():
             if should_close:
                 break
 
-            if self.search_hand:
-                gestures = self.detect_objects(frame)
-            else:
-                gestures = [GestureData([0, 0, 1, 1], 0, 1.)]
+            gestures = self.detect_objects(frame)
 
             mask = self._get_mask(frame)
 
             gestures, img = self.make_predictions(gestures, mask)
-
 
             if not HEADLESS:
                 frame_to_show = self.annotate_frame(frame, gestures)
